@@ -5,12 +5,19 @@ import guichaguri.minimalftp.api.IFileSystem;
 import guichaguri.minimalftp.api.IUserAuthenticator;
 
 /**
+ * No Operation Authenticator
+ * Allows any user in with a predefined file system
  * @author Guilherme Chaguri
  */
 public class NoOpAuthenticator implements IUserAuthenticator {
 
     private final IFileSystem fs;
 
+    /**
+     * Creates the authenticator
+     * @param fs A file system
+     * @see NativeFileSystem
+     */
     public NoOpAuthenticator(IFileSystem fs) {
         this.fs = fs;
     }

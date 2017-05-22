@@ -19,8 +19,8 @@ public interface IUserAuthenticator {
     boolean needsPassword(FTPConnection con, String username);
 
     /**
-     * Authenticates a user
-     * You use custom file systems depending on the user
+     * Authenticates a user synchronously
+     * You use a custom file system depending on the user
      *
      * @param username The username or {@code null} when {@link #needsUsername(FTPConnection)} returns false
      * @param password The password or {@code null} when {@link #needsPassword(FTPConnection, String)} returns false

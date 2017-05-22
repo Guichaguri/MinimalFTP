@@ -65,6 +65,8 @@ public class ConnectionHandler implements ICommandHandler {
                 con.sendResponse(421, "Authentication failed");
                 con.close();
             }
+        } else {
+            con.sendResponse(530, "Waiting for authentication...");
         }
     }
 
@@ -87,7 +89,7 @@ public class ConnectionHandler implements ICommandHandler {
         } else if(cmd[0].equals("SYST")) { // System Information (SYST)
             con.sendResponse(215, "UNIX Type: L8"); // Generic System Info
         } else if(cmd[0].equals("PORT")) { // Active Mode (PORT <host-port>)
-            port(cmd);
+            port(cmd[1]);
         } else if(cmd[0].equals("PASV")) { // Passive Mode (PASV)
             pasv();
         } else if(cmd[0].equals("TYPE")) { // Binary Flag (TYPE <type>)
@@ -202,7 +204,7 @@ public class ConnectionHandler implements ICommandHandler {
     }
 
     private void pasv() throws IOException {
-        passiveServer = new ServerSocket(0, 50, con.getServer().getSocket().getInetAddress());
+        passiveServer = new ServerSocket(0, 5, con.getServer().getAddress());
         passive = true;
 
         String host = passiveServer.getInetAddress().getHostAddress();
@@ -215,13 +217,11 @@ public class ConnectionHandler implements ICommandHandler {
         String address = addr[0] + "," + addr[1] + "," + addr[2] + "," + addr[3];
         String addressPort = port / 256 + "," + port % 256;
 
-        System.out.println(passiveServer.getInetAddress().getHostAddress() + " - " + passiveServer.getLocalPort());
-
         con.sendResponse(227, "Enabling Passive Mode (" + address + "," + addressPort + ")");
     }
 
-    private void port(String[] cmd) {
-        String[] args = cmd[1].split(",");
+    private void port(String data) {
+        String[] args = data.split(",");
 
         activeHost = args[0] + "." + args[1] + "." + args[2] + "." + args[3];
         activePort = Integer.parseInt(args[4]) * 256 + Integer.parseInt(args[5]);

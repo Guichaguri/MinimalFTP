@@ -87,10 +87,12 @@ public class FileHandler implements ICommandHandler {
     }
 
     private void cwd(String path) throws IOException {
-        if(path.equals("...")) {
+        if(path.equals("...") || path.equals("..")) {
             cwd = fs.getParent(cwd);
         } else if(path.equals("/")) {
             cwd = fs.getRoot();
+        } else if(path.startsWith("/")) {
+            cwd = fs.findFile(fs.getRoot(), path.substring(1));
         } else {
             cwd = fs.findFile(cwd, path);
         }
@@ -103,8 +105,7 @@ public class FileHandler implements ICommandHandler {
     }
 
     private void pwd() {
-        String path = fs.getPath(cwd);
-        if(path.isEmpty()) path = "/";
+        String path = "/" + fs.getPath(cwd);
         con.sendResponse(257, '"' + path + '"' + " CWD Name");
     }
 

@@ -11,16 +11,21 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
+ * Native File System
+ * Allows the manipulation of any file inside a directory
  * @author Guilherme Chaguri
  */
 public class NativeFileSystem implements IFileSystem<File> {
 
     private final File rootDir;
 
+    /**
+     * Creates a native file system
+     * @param rootDir The root directory
+     */
     public NativeFileSystem(File rootDir) {
         this.rootDir = rootDir;
     }
-
 
     @Override
     public File getRoot() {
@@ -83,7 +88,9 @@ public class NativeFileSystem implements IFileSystem<File> {
 
     @Override
     public File getParent(File file) throws IOException {
-        if(file.equals(rootDir)) throw new FileNotFoundException();
+        if(file.equals(rootDir)) {
+            throw new FileNotFoundException("No permission to access this file");
+        }
 
         return file.getParentFile();
     }
@@ -100,7 +107,7 @@ public class NativeFileSystem implements IFileSystem<File> {
         File file = new File(rootDir, path);
 
         if(!isInside(rootDir, file)) {
-            throw new FileNotFoundException();
+            throw new FileNotFoundException("No permission to access this file");
         }
 
         return file;
@@ -111,7 +118,7 @@ public class NativeFileSystem implements IFileSystem<File> {
         File file = new File(cwd, path);
 
         if(!isInside(rootDir, file)) {
-            throw new FileNotFoundException();
+            throw new FileNotFoundException("No permission to access this file");
         }
 
         return file;
@@ -129,31 +136,34 @@ public class NativeFileSystem implements IFileSystem<File> {
 
     @Override
     public void mkdirs(File file) throws IOException {
-        if(!file.mkdirs()) throw new IOException();
+        if(!file.mkdirs()) throw new IOException("Couldn't create the directory");
     }
 
     @Override
     public void delete(File file) throws IOException {
-        if(!file.delete()) throw new IOException();
+        if(!file.delete()) throw new IOException("Couldn't delete the file");
     }
 
     @Override
     public void rename(File from, File to) throws IOException {
-        if(!from.renameTo(to)) throw new IOException();
+        if(!from.renameTo(to)) throw new IOException("Couldn't rename the file");
     }
 
     @Override
-    public void chmod(File file, int perms) {
+    public void chmod(File file, int perms) throws IOException {
         file.setReadable(Utils.hasPermission(perms, Utils.CAT_OWNER + Utils.TYPE_READ), true);
         file.setWritable(Utils.hasPermission(perms, Utils.CAT_OWNER + Utils.TYPE_WRITE), true);
         file.setExecutable(Utils.hasPermission(perms, Utils.CAT_OWNER + Utils.TYPE_EXECUTE), true);
     }
 
     private boolean isInside(File dir, File file) {
-        // TODO optimize this method
-        if(file == null) return false;
         if(file.equals(dir)) return true;
-        return isInside(dir, file.getParentFile());
+
+        try {
+            return file.getCanonicalPath().startsWith(dir.getCanonicalPath() + File.separator);
+        } catch(IOException ex) {
+            return false;
+        }
     }
 
 }
