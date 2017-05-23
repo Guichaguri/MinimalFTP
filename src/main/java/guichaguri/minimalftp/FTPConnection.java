@@ -14,33 +14,29 @@ import java.net.Socket;
  */
 public class FTPConnection implements Closeable {
 
-    private final FTPServer server;
-    private final Socket con;
-    private final BufferedReader reader;
-    private final BufferedWriter writer;
-    private final ConnectionThread thread;
+    protected final FTPServer server;
+    protected final Socket con;
+    protected final BufferedReader reader;
+    protected final BufferedWriter writer;
+    protected final ConnectionThread thread;
 
-    private ConnectionHandler conHandler;
-    private FileHandler fileHandler;
+    protected ConnectionHandler conHandler;
+    protected FileHandler fileHandler;
 
-    protected FTPConnection(FTPServer server, Socket con, boolean multithreaded) throws IOException {
+    protected FTPConnection(FTPServer server, Socket con) throws IOException {
         this.server = server;
         this.con = con;
         this.reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
         this.writer = new BufferedWriter(new OutputStreamWriter(con.getOutputStream()));
+
+        this.thread = new ConnectionThread();
+        this.thread.start();
 
         this.conHandler = new ConnectionHandler(this);
         this.fileHandler = new FileHandler(this);
 
         this.conHandler.onConnected();
         this.fileHandler.onConnected();
-
-        if(multithreaded) {
-            thread = new ConnectionThread();
-            thread.start();
-        } else {
-            thread = null;
-        }
     }
 
     /**
@@ -95,11 +91,13 @@ public class FTPConnection implements Closeable {
      * @param response The response message
      */
     public void sendResponse(int code, String response) {
+        if(con.isClosed()) return;
+
         try {
             writer.write(code + " " + response + "\r\n");
             writer.flush();
         } catch(IOException ex) {
-            throw new RuntimeException("An error occurred while sending a response");
+            Utils.closeQuietly(this);
         }
     }
 
@@ -109,6 +107,8 @@ public class FTPConnection implements Closeable {
      * @throws ResponseException When an error occurs
      */
     public void sendData(byte[] data) throws ResponseException {
+        if(con.isClosed()) return;
+
         try {
             Socket socket = conHandler.createDataSocket();
             OutputStream out = socket.getOutputStream();
@@ -116,8 +116,8 @@ public class FTPConnection implements Closeable {
             Utils.write(out, data, data.length, conHandler.isAsciiMode());
 
             out.flush();
-            out.close();
-            socket.close();
+            Utils.closeQuietly(out);
+            Utils.closeQuietly(socket);
         } catch(IOException ex) {
             throw new ResponseException(425, "An error occurred while opening the data connection");
         }
@@ -129,6 +129,8 @@ public class FTPConnection implements Closeable {
      * @throws ResponseException When an error occurs
      */
     public void sendData(InputStream in) throws ResponseException {
+        if(con.isClosed()) return;
+
         try {
             Socket socket = conHandler.createDataSocket();
             OutputStream out = socket.getOutputStream();
@@ -140,9 +142,9 @@ public class FTPConnection implements Closeable {
             }
 
             out.flush();
-            out.close();
-            in.close();
-            socket.close();
+            Utils.closeQuietly(out);
+            Utils.closeQuietly(in);
+            Utils.closeQuietly(socket);
         } catch(IOException ex) {
             throw new ResponseException(425, "An error occurred while opening the data connection");
         }
@@ -154,6 +156,8 @@ public class FTPConnection implements Closeable {
      * @throws ResponseException When an error occurs
      */
     public void receiveData(OutputStream out) throws ResponseException {
+        if(con.isClosed()) return;
+
         try {
             Socket socket = conHandler.createDataSocket();
             InputStream in = socket.getInputStream();
@@ -165,14 +169,17 @@ public class FTPConnection implements Closeable {
             }
 
             out.flush();
-            out.close();
-            in.close();
-            socket.close();
+            Utils.closeQuietly(out);
+            Utils.closeQuietly(in);
+            Utils.closeQuietly(socket);
         } catch(IOException ex) {
             throw new ResponseException(425, "An error occurred while opening the data connection");
         }
     }
 
+    /**
+     * Processes commands
+     */
     protected boolean process(String[] cmd) {
         try {
             if(conHandler.onCommand(cmd)) return true;
@@ -195,13 +202,22 @@ public class FTPConnection implements Closeable {
         return false;
     }
 
-    protected void update(boolean block) throws IOException {
-        if(!block && !reader.ready()) return;
-        String line = reader.readLine();
-        if(line == null) {
-            close();
+    /**
+     * Updates the connection
+     */
+    protected void update() throws IOException {
+        if(conHandler.shouldStop()) {
+            Utils.closeQuietly(this);
             return;
         }
+
+        String line = reader.readLine();
+
+        if(line == null) {
+            Utils.closeQuietly(this);
+            return;
+        }
+
         if(line.isEmpty()) return;
 
         String[] cmd = line.split("\\s+");
@@ -235,11 +251,11 @@ public class FTPConnection implements Closeable {
     private class ConnectionThread extends Thread {
         @Override
         public void run() {
-            while(!conHandler.shouldStop() && !con.isClosed()) {
+            while(!con.isClosed()) {
                 try {
-                    update(true);
+                    update();
                 } catch(IOException ex) {
-                    ex.printStackTrace();
+                    ex.printStackTrace();//TODO handle this
                 }
             }
         }

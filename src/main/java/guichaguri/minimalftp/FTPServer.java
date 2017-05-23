@@ -16,14 +16,12 @@ import java.util.List;
  */
 public class FTPServer implements Closeable {
 
-    private final List<FTPConnection> connections = Collections.synchronizedList(new ArrayList<FTPConnection>());
+    protected final List<FTPConnection> connections = Collections.synchronizedList(new ArrayList<FTPConnection>());
 
-    private IUserAuthenticator auth = null;
+    protected IUserAuthenticator auth = null;
 
-    private ServerSocket socket = null;
-    private boolean multithreaded;
-    private ServerThread serverThread = null;
-    private ConnectionThread conThread = null;
+    protected ServerSocket socket = null;
+    protected ServerThread serverThread = null;
 
     /**
      * Creates a new server
@@ -84,7 +82,7 @@ public class FTPServer implements Closeable {
      * @throws IOException
      */
     public void listen(int port) throws IOException {
-        listen(null, port, false);
+        listen(null, port);
     }
 
     /**
@@ -92,21 +90,13 @@ public class FTPServer implements Closeable {
      *
      * @param address The server address or {@code null} for a local address
      * @param port The server port or {@code 0} to automatically allocate the port
-     * @param multithreaded When {@code true}, each connection will run in their own thread.
-     *                      When {@code false}, all connections will run in a single thread.
      * @throws IOException
      */
-    public void listen(InetAddress address, int port, boolean multithreaded) throws IOException {
+    public void listen(InetAddress address, int port) throws IOException {
         if(auth == null) throw new NullPointerException("The Authenticator is null");
         if(socket != null) throw new IOException("Server already started");
 
         socket = new ServerSocket(port, 50, address);
-        this.multithreaded = multithreaded;
-
-        if(!multithreaded) {
-            conThread = new ConnectionThread();
-            conThread.start();
-        }
 
         serverThread = new ServerThread();
         serverThread.start();
@@ -115,86 +105,80 @@ public class FTPServer implements Closeable {
     /**
      * Starts the FTP server synchronously
      * It will block the current thread
+     * Connections to the server will still create new threads
      *
      * @param port The server port
      * @throws IOException
      */
     public void listenSync(int port) throws IOException {
-        listenSync(null, port, false);
+        listenSync(null, port);
     }
 
     /**
      * Starts the FTP server synchronously
      * It will block the current thread
+     * Connections to the server will still create new threads
      *
      * @param address The server address or {@code null} for a local address
      * @param port The server port or {@code 0} to automatically allocate the port
-     * @param multithreaded When {@code true}, each connection will run in their own thread.
-     *                      When {@code false}, all connections will run in a single thread.
      * @throws IOException
      */
-    public void listenSync(InetAddress address, int port, boolean multithreaded) throws IOException {
+    public void listenSync(InetAddress address, int port) throws IOException {
         if(auth == null) throw new NullPointerException("The Authenticator is null");
         if(socket != null) throw new IOException("Server already started");
 
         socket = new ServerSocket(port, 50, address);
-        this.multithreaded = multithreaded;
-
-        if(!multithreaded) {
-            conThread = new ConnectionThread();
-            conThread.start();
-        }
 
         while(!socket.isClosed()) {
             update();
         }
     }
 
+    /**
+     * Updates the server
+     */
     protected void update() {
         try {
             Socket connection = socket.accept();
-            System.out.println("New connection: " + connection.getInetAddress().toString());//TODO remove debug
-            synchronized(connections) {
-                connections.add(new FTPConnection(this, connection, multithreaded));
-            }
+            addConnection(new FTPConnection(this, connection));
         } catch(IOException ex) {
             ex.printStackTrace();
         }
     }
 
-    protected void updateConnections() {
+    /**
+     * Called when a connection is created
+     */
+    protected void addConnection(FTPConnection con) {
+        System.out.println("New connection: " + con.getAddress().toString());//TODO remove debug
+
         synchronized(connections) {
-            for(FTPConnection con : connections) {
-                try {
-                    con.update(false);
-                } catch(IOException ex) {
-                    ex.printStackTrace();
-                }
-            }
+            connections.add(con);
         }
     }
 
+    /**
+     * Called when a connection is terminated
+     */
     protected void removeConnection(FTPConnection con) {
-        System.out.println("Removing connection " + con.getAddress().toString());
+        System.out.println("Removing connection " + con.getAddress().toString());//TODO remove debug
+
         synchronized(connections) {
             connections.remove(con);
         }
     }
 
+    /**
+     * Starts disposing server resources
+     */
     protected void stop() {
         if(serverThread != null) {
             serverThread.interrupt();
             serverThread = null;
         }
-        if(conThread != null) {
-            conThread.interrupt();
-            conThread = null;
-        }
 
         for(FTPConnection con : connections) {
-            try {
-                con.close();
-            } catch(IOException ex) {}
+            Utils.closeQuietly(con);
         }
     }
 
@@ -216,21 +200,6 @@ public class FTPServer implements Closeable {
         public void run() {
             while(!socket.isClosed()) {
                 update();
-            }
-        }
-    }
-
-    /**
-     * Thread that processes all connections when multithreading is disabled
-     */
-    private class ConnectionThread extends Thread {
-        @Override
-        public void run() {
-            while(!socket.isClosed()) {
-                updateConnections();
-                try {
-                    Thread.sleep(100);
-                } catch(InterruptedException ex) {}
             }
         }
     }

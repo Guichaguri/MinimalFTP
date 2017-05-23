@@ -81,21 +81,25 @@ public class FileHandler implements ICommandHandler {
 
     }
 
+    private Object getFile(String path) throws IOException {
+        if(path.equals("...") || path.equals("..")) {
+            return fs.getParent(cwd);
+        } else if(path.equals("/")) {
+            return fs.getRoot();
+        } else if(path.startsWith("/")) {
+            return fs.findFile(fs.getRoot(), path.substring(1));
+        } else {
+            return fs.findFile(cwd, path);
+        }
+    }
+
     private void site_chmod(String perm, String file) throws IOException {
-        fs.chmod(fs.findFile(cwd, file), Utils.fromOctal(perm));
+        fs.chmod(getFile(file), Utils.fromOctal(perm));
         con.sendResponse(200, "The file permissions were successfully changed");
     }
 
     private void cwd(String path) throws IOException {
-        if(path.equals("...") || path.equals("..")) {
-            cwd = fs.getParent(cwd);
-        } else if(path.equals("/")) {
-            cwd = fs.getRoot();
-        } else if(path.startsWith("/")) {
-            cwd = fs.findFile(fs.getRoot(), path.substring(1));
-        } else {
-            cwd = fs.findFile(cwd, path);
-        }
+        cwd = getFile(path);
         con.sendResponse(250, "The working directory was changed");
     }
 
@@ -114,18 +118,18 @@ public class FileHandler implements ICommandHandler {
     }
 
     private void rnfr(String path) throws IOException {
-        rnFile = fs.findFile(cwd, path);
+        rnFile = getFile(path);
         con.sendResponse(350, "Rename request received");
     }
 
     private void rnto(String path) throws IOException {
-        fs.rename(rnFile, fs.findFile(cwd, path));
+        fs.rename(rnFile, getFile(path));
         rnFile = null;
         con.sendResponse(250, "File successfully renamed");
     }
 
     private void stor(String path) throws IOException {
-        Object file = fs.findFile(cwd, path);
+        Object file = getFile(path);
 
         con.sendResponse(150, "Receiving a file stream for " + path);
         con.receiveData(fs.writeFile(file));
@@ -133,7 +137,7 @@ public class FileHandler implements ICommandHandler {
     }
 
     private void retr(String path) throws IOException {
-        Object file = fs.findFile(cwd, path);
+        Object file = getFile(path);
 
         con.sendResponse(150, "Sending the file stream for " + path + " (" + fs.getSize(file) + " bytes)");
         con.sendData(fs.readFile(file));
@@ -144,7 +148,7 @@ public class FileHandler implements ICommandHandler {
         con.sendResponse(150, "Sending file list...");
 
         String data = "";
-        Object dir = path == null ? cwd : fs.findFile(path);
+        Object dir = path == null ? cwd : getFile(path);
 
         for(Object file : fs.listFiles(dir)) {
             data += Utils.format(fs, file);
@@ -157,7 +161,7 @@ public class FileHandler implements ICommandHandler {
     private void nlst(String path) throws IOException {
         con.sendResponse(150, "Sending file list...");
 
-        Object dir = path == null ? cwd : fs.findFile(path);
+        Object dir = path == null ? cwd : getFile(path);
         String data = "";
 
         for(Object file : fs.listFiles(dir)) {
@@ -169,31 +173,37 @@ public class FileHandler implements ICommandHandler {
     }
 
     private void rmd(String path) throws IOException {
-        Object file = fs.findFile(path);
+        Object file = getFile(path);
+        
         if(!fs.isDirectory(file)) {
             con.sendResponse(550, "Not a directory");
             return;
         }
+
         fs.delete(file);
         con.sendResponse(250, '"' + path + '"' + " Directory Deleted");
     }
 
     private void dele(String path) throws IOException {
-        Object file = fs.findFile(path);
+        Object file = getFile(path);
+
         if(fs.isDirectory(file)) {
             con.sendResponse(550, "Not a file");
             return;
         }
+
         fs.delete(file);
         con.sendResponse(250, '"' + path + '"' + " File Deleted");
     }
 
     private void mkd(String path) throws IOException {
-        Object file = fs.findFile(path);
+        Object file = getFile(path);
+
         if(!fs.isDirectory(file)) {
             con.sendResponse(550, "Not a directory");
             return;
         }
+
         fs.mkdirs(file);
         con.sendResponse(257, '"' + path + '"' + " Directory Created");
     }

@@ -1,6 +1,7 @@
 package guichaguri.minimalftp;
 
 import guichaguri.minimalftp.api.IFileSystem;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
@@ -103,6 +104,12 @@ public class Utils {
 
     public static int fromOctal(String perm) {
         return Integer.parseInt(perm, 8);
+    }
+
+    public static void closeQuietly(Closeable closeable) {
+        try {
+            closeable.close();
+        } catch(IOException e) {}
     }
 
 }
