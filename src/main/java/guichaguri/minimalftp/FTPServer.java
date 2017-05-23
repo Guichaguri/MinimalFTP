@@ -142,7 +142,7 @@ public class FTPServer implements Closeable {
             Socket connection = socket.accept();
             addConnection(new FTPConnection(this, connection));
         } catch(IOException ex) {
-            ex.printStackTrace();
+            // The server is probably closed
         }
     }
 
@@ -170,21 +170,31 @@ public class FTPServer implements Closeable {
 
     /**
      * Starts disposing server resources
+     * For a complete cleanup, use {@link #close()} instead
      */
-    protected void stop() {
+    protected void dispose() {
+        // Terminates the server thread
         if(serverThread != null) {
             serverThread.interrupt();
             serverThread = null;
         }
 
-        for(FTPConnection con : connections) {
-            Utils.closeQuietly(con);
+        // Stops each connection and clears them
+        synchronized(connections) {
+            for(FTPConnection con : connections) {
+                try {
+                    con.stop();
+                } catch(Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+            connections.clear();
         }
     }
 
     @Override
     public void close() throws IOException {
-        stop();
+        dispose();
 
         if(socket != null) {
             socket.close();
@@ -198,7 +208,7 @@ public class FTPServer implements Closeable {
     private class ServerThread extends Thread {
         @Override
         public void run() {
-            while(!socket.isClosed()) {
+            while(socket != null && !socket.isClosed()) {
                 update();
             }
         }

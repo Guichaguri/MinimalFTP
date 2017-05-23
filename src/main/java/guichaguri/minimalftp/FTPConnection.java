@@ -29,11 +29,11 @@ public class FTPConnection implements Closeable {
         this.reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
         this.writer = new BufferedWriter(new OutputStreamWriter(con.getOutputStream()));
 
-        this.thread = new ConnectionThread();
-        this.thread.start();
-
         this.conHandler = new ConnectionHandler(this);
         this.fileHandler = new FileHandler(this);
+
+        this.thread = new ConnectionThread();
+        this.thread.start();
 
         this.conHandler.onConnected();
         this.fileHandler.onConnected();
@@ -205,13 +205,19 @@ public class FTPConnection implements Closeable {
     /**
      * Updates the connection
      */
-    protected void update() throws IOException {
+    protected void update() {
         if(conHandler.shouldStop()) {
             Utils.closeQuietly(this);
             return;
         }
 
-        String line = reader.readLine();
+        String line;
+
+        try {
+            line = reader.readLine();
+        } catch(IOException ex) {
+            return;
+        }
 
         if(line == null) {
             Utils.closeQuietly(this);
@@ -231,9 +237,12 @@ public class FTPConnection implements Closeable {
         }
     }
 
-    @Override
-    public void close() throws IOException {
-        if(thread != null) {
+    /**
+     * Stops the connection, but does not removes it from the list.
+     * For a complete cleanup, use {@link #close()} instead
+     */
+    protected void stop() throws IOException {
+        if(!thread.isInterrupted()) {
             thread.interrupt();
         }
 
@@ -241,6 +250,11 @@ public class FTPConnection implements Closeable {
         fileHandler.onDisconnected();
 
         con.close();
+    }
+
+    @Override
+    public void close() throws IOException {
+        stop();
 
         server.removeConnection(this);
     }
@@ -252,11 +266,7 @@ public class FTPConnection implements Closeable {
         @Override
         public void run() {
             while(!con.isClosed()) {
-                try {
-                    update();
-                } catch(IOException ex) {
-                    ex.printStackTrace();//TODO handle this
-                }
+                update();
             }
         }
     }
