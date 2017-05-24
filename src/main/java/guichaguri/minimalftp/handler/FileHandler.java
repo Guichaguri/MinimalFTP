@@ -5,6 +5,7 @@ import guichaguri.minimalftp.Utils;
 import guichaguri.minimalftp.api.ICommandHandler;
 import guichaguri.minimalftp.api.IFileSystem;
 import java.io.IOException;
+import java.util.UUID;
 
 /**
  * @author Guilherme Chaguri
@@ -59,6 +60,8 @@ public class FileHandler implements ICommandHandler {
             retr(cmd[1]);
         } else if(cmd[0].equals("STOR")) { // Store File (STOR <file>)
             stor(cmd[1]);
+        } else if(cmd[0].equals("STOU")) { // Store Random File (STOU [file])
+            stou(cmd.length > 1 ? cmd[1] : null);
         } else if(cmd[0].equals("ALLO")) { // Allocate Space (ALLO <size>)
             allo();
         } else if(cmd[0].equals("RNFR")) { // Rename From (RNFR <file>)
@@ -132,6 +135,29 @@ public class FileHandler implements ICommandHandler {
         Object file = getFile(path);
 
         con.sendResponse(150, "Receiving a file stream for " + path);
+        con.receiveData(fs.writeFile(file));
+        con.sendResponse(226, "File received!");
+    }
+
+    private void stou(String path) throws IOException {
+        Object file = null;
+        String ext = ".tmp";
+
+        if(path != null) {
+            file = getFile(path);
+            int i = path.lastIndexOf('.');
+            if(i > 0) ext = path.substring(i);
+        }
+
+        while(file != null && fs.exists(file)) {
+            // Quick way to generate simple random names
+            // It's not the "perfect" solution, as it only uses hexadecimal characters
+            // But definitely enough for file names
+            String name = UUID.randomUUID().toString().replace("-", "");
+            file = fs.findFile(cwd, name + ext);
+        }
+
+        con.sendResponse(150, "Receiving a file stream for " + fs.getPath(file));
         con.receiveData(fs.writeFile(file));
         con.sendResponse(226, "File received!");
     }
