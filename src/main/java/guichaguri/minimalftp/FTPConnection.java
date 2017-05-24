@@ -23,6 +23,8 @@ public class FTPConnection implements Closeable {
     protected ConnectionHandler conHandler;
     protected FileHandler fileHandler;
 
+    protected long bytesTransferred = 0;
+
     protected FTPConnection(FTPServer server, Socket con) throws IOException {
         this.server = server;
         this.con = con;
@@ -51,6 +53,13 @@ public class FTPConnection implements Closeable {
      */
     public InetAddress getAddress() {
         return con.getInetAddress();
+    }
+
+    /**
+     * Gets the amount of bytes sent or received
+     */
+    public long getBytesTransferred() {
+        return bytesTransferred;
     }
 
     /**
@@ -114,6 +123,7 @@ public class FTPConnection implements Closeable {
             OutputStream out = socket.getOutputStream();
 
             Utils.write(out, data, data.length, conHandler.isAsciiMode());
+            bytesTransferred += data.length;
 
             out.flush();
             Utils.closeQuietly(out);
@@ -139,6 +149,7 @@ public class FTPConnection implements Closeable {
             int len;
             while((len = in.read(buffer)) != -1) {
                 Utils.write(out, buffer, len, conHandler.isAsciiMode());
+                bytesTransferred += len;
             }
 
             out.flush();
@@ -166,6 +177,7 @@ public class FTPConnection implements Closeable {
             int len;
             while((len = in.read(buffer)) != -1) {
                 out.write(buffer, 0, len);
+                bytesTransferred += len;
             }
 
             out.flush();

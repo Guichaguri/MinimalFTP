@@ -98,6 +98,8 @@ public class ConnectionHandler implements ICommandHandler {
             stru(cmd[1]);
         } else if(cmd[0].equals("MODE")) { // Change Mode (MODE <mode>)
             mode(cmd[1]);
+        } else if(cmd[0].equals("STAT")) { // Statistics (STAT)
+            stat();
         } else {
             return false;
         }
@@ -226,6 +228,18 @@ public class ConnectionHandler implements ICommandHandler {
         activeHost = args[0] + "." + args[1] + "." + args[2] + "." + args[3];
         activePort = Integer.parseInt(args[4]) * 256 + Integer.parseInt(args[5]);
         passive = false;
+    }
+
+    private void stat() throws IOException {
+        con.sendResponse(211, "Sending the status...");
+        String data = "";
+        String ip = con.getAddress().getHostAddress();
+        data += "Connected from " + ip + " (" + ip + ")";
+        data += "Logged in " + (username != null ? "as " + username : "anonymously");
+        data += "TYPE: " + (ascii ? "ASCII" : "Binary") + ", STRUcture: File, Mode: Stream";
+        data += "Total bytes transferred for session: " + con.getBytesTransferred();
+        con.sendData(data.getBytes("UTF-8"));
+        con.sendResponse(211, "Status sent!");
     }
 
 }
