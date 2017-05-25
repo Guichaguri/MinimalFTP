@@ -5,6 +5,9 @@ import guichaguri.minimalftp.Utils;
 import guichaguri.minimalftp.api.ICommandHandler;
 import guichaguri.minimalftp.api.IFileSystem;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -74,6 +77,10 @@ public class FileHandler implements ICommandHandler {
             if(cmd[1].equals("CHMOD")) { // Change Permissions (SITE CHMOD <perm> <file>)
                 site_chmod(cmd[2], cmd[3]);
             }
+        } else if(cmd[0].equals("MDTM")) { // Modification Time (MDTM <file>)
+            mdtm(cmd[1]);
+        } else if(cmd[0].equals("SIZE")) { // File Size (SIZE <file>)
+            size(cmd[1]);
         } else {
             return false;
         }
@@ -242,6 +249,22 @@ public class FileHandler implements ICommandHandler {
 
         fs.mkdirs(file);
         con.sendResponse(257, '"' + path + '"' + " Directory Created");
+    }
+
+    private void mdtm(String path) throws IOException {
+        Object file = getFile(path);
+
+        Date date = new Date(fs.getLastModified(file));
+        // TODO cache a SimpleDateFormat instance
+        String time = new SimpleDateFormat("YYYYMMDDHHmmss", Locale.ENGLISH).format(date);
+
+        con.sendResponse(213, time);
+    }
+
+    private void size(String path) throws IOException {
+        Object file = getFile(path);
+
+        con.sendResponse(213, Long.toString(fs.getSize(file)));
     }
 
 }

@@ -11,4 +11,4 @@ A lightweight, simple FTP server. Pure Java, no libraries.
 * [RFC 2389](https://tools.ietf.org/html/rfc2389) - Feature negotiation mechanism for the File Transfer Protocol (0/2)
 * [RFC 2428](https://tools.ietf.org/html/rfc2428) - FTP Extensions for IPv6 and NATs (0/2)
 * [RFC 2640](https://tools.ietf.org/html/rfc2640) - Internationalization of the File Transfer Protocol (0/1)
-* [RFC 3659](https://tools.ietf.org/html/rfc3659) - Extensions to FTP (0/4)
+* [RFC 3659](https://tools.ietf.org/html/rfc3659) - Extensions to FTP (2/4)
