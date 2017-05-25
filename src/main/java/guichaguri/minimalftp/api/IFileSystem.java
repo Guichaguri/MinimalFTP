@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
+ * Represents a File System
  * @author Guilherme Chaguri
  */
 public interface IFileSystem<F extends Object> {
@@ -81,6 +82,7 @@ public interface IFileSystem<F extends Object> {
      * This method should check for file access permissions
      *
      * @param file The file object
+     * @throws java.io.FileNotFoundException When there's no permission to access the file
      * @throws IOException When an error occurs
      */
     F getParent(F file) throws IOException;
@@ -99,6 +101,7 @@ public interface IFileSystem<F extends Object> {
      * This method should check for file access permissions
      *
      * @param path The path
+     * @throws java.io.FileNotFoundException When there's no permission to access the file or the file doesn't exist
      * @throws IOException When an error occurs
      */
     F findFile(String path) throws IOException;
@@ -109,6 +112,7 @@ public interface IFileSystem<F extends Object> {
      *
      * @param cwd The base directory
      * @param path The path
+     * @throws java.io.FileNotFoundException When there's no permission to access the file or the file doesn't exist
      * @throws IOException When an error occurs
      */
     F findFile(F cwd, String path) throws IOException;
@@ -125,9 +129,10 @@ public interface IFileSystem<F extends Object> {
      * If the file does not exist, creates the file
      *
      * @param file The file object
+     * @param append Whether the bytes should be written at the end of the file
      * @throws IOException When an error occurs
      */
-    OutputStream writeFile(F file) throws IOException;
+    OutputStream writeFile(F file, boolean append) throws IOException;
 
     /**
      * Creates a directory

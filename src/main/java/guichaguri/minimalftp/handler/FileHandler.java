@@ -62,6 +62,8 @@ public class FileHandler implements ICommandHandler {
             stor(cmd[1]);
         } else if(cmd[0].equals("STOU")) { // Store Random File (STOU [file])
             stou(cmd.length > 1 ? cmd[1] : null);
+        } else if(cmd[0].equals("APPE")) { // Append File (APPE <file>)
+            appe(cmd[1]);
         } else if(cmd[0].equals("ALLO")) { // Allocate Space (ALLO <size>)
             allo();
         } else if(cmd[0].equals("RNFR")) { // Rename From (RNFR <file>)
@@ -135,7 +137,7 @@ public class FileHandler implements ICommandHandler {
         Object file = getFile(path);
 
         con.sendResponse(150, "Receiving a file stream for " + path);
-        con.receiveData(fs.writeFile(file));
+        con.receiveData(fs.writeFile(file, false));
         con.sendResponse(226, "File received!");
     }
 
@@ -158,7 +160,15 @@ public class FileHandler implements ICommandHandler {
         }
 
         con.sendResponse(150, "Receiving a file stream for " + fs.getPath(file));
-        con.receiveData(fs.writeFile(file));
+        con.receiveData(fs.writeFile(file, false));
+        con.sendResponse(226, "File received!");
+    }
+
+    private void appe(String path) throws IOException {
+        Object file = getFile(path);
+
+        con.sendResponse(150, "Receiving a file stream for " + path);
+        con.receiveData(fs.writeFile(file, true));
         con.sendResponse(226, "File received!");
     }
 

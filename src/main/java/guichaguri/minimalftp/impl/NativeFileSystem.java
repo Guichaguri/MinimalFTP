@@ -130,8 +130,8 @@ public class NativeFileSystem implements IFileSystem<File> {
     }
 
     @Override
-    public OutputStream writeFile(File file) throws IOException {
-        return new FileOutputStream(file);
+    public OutputStream writeFile(File file, boolean append) throws IOException {
+        return new FileOutputStream(file, append);
     }
 
     @Override
