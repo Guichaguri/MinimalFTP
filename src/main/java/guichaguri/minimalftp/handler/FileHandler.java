@@ -50,8 +50,15 @@ public class FileHandler {
         con.registerCommand("RNFR", "RNFR <file>", this::rnfr); // Rename From
         con.registerCommand("RNTO", "RNTO <file>", this::rnto); // Rename To
         con.registerCommand("SITE", "SITE <cmd>", this::site); // Special Commands
-        con.registerCommand("MDTM", "MDTM <file>", this::mdtm); // Modification Time
-        con.registerCommand("SIZE", "SIZE <file>", this::size); // File Size
+
+        con.registerCommand("MDTM", "MDTM <file>", this::mdtm); // Modification Time (RFC 3659)
+        con.registerCommand("SIZE", "SIZE <file>", this::size); // File Size (RFC 3659)
+
+        con.registerCommand("XCWD", "XCWD <file>", this::cwd); // Change Working Directory (RFC 775)
+        con.registerCommand("XCUP", "XCUP", this::cdup); // Change to Parent Directory (RFC 775)
+        con.registerCommand("XPWD", "XPWD", this::pwd); // Retrieve Working Directory (RFC 775)
+        con.registerCommand("XMKD", "XMKD <file>", this::mkd); // Create Directory (RFC 775)
+        con.registerCommand("XRMD", "XRMD <file>", this::rmd); // Delete Directory (RFC 775)
     }
 
     private Object getFile(String path) throws IOException {

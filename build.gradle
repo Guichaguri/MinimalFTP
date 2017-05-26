@@ -2,13 +2,21 @@ group 'guichaguri.minimalftp'
 version '1.0-SNAPSHOT'
 
 apply plugin: 'java'
+apply plugin: 'maven-publish'
 
 sourceCompatibility = 1.8
 
-repositories {
-    mavenCentral()
-}
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
 
-dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.11'
+    repositories {
+        maven {
+            // change to point to your repo, e.g. http://my.org/repo
+            url "$buildDir/repo"
+        }
+    }
 }
