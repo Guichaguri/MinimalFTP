@@ -2,17 +2,25 @@ package guichaguri.minimalftp;
 
 import guichaguri.minimalftp.api.IFileSystem;
 import guichaguri.minimalftp.api.ResponseException;
+import guichaguri.minimalftp.api.CommandInfo;
+import guichaguri.minimalftp.api.CommandInfo.Command;
+import guichaguri.minimalftp.api.CommandInfo.NoArgsCommand;
+import guichaguri.minimalftp.api.CommandInfo.SingleArgCommand;
 import guichaguri.minimalftp.handler.ConnectionHandler;
 import guichaguri.minimalftp.handler.FileHandler;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Represents a FTP user connected to the server
  * @author Guilherme Chaguri
  */
 public class FTPConnection implements Closeable {
+
+    protected final Map<String, CommandInfo> commands = new HashMap<>();
 
     protected final FTPServer server;
     protected final Socket con;
@@ -37,8 +45,9 @@ public class FTPConnection implements Closeable {
         this.thread = new ConnectionThread();
         this.thread.start();
 
+        this.conHandler.registerCommands();
+        this.fileHandler.registerCommands();
         this.conHandler.onConnected();
-        this.fileHandler.onConnected();
     }
 
     /**
@@ -189,29 +198,76 @@ public class FTPConnection implements Closeable {
         }
     }
 
+    public void registerCommand(String label, String help, Command cmd) {
+        addCommand(label, help, cmd, false);
+    }
+
+    public void registerCommand(String label, String help, NoArgsCommand cmd) {
+        addCommand(label, help, cmd, false);
+    }
+
+    public void registerCommand(String label, String help, SingleArgCommand cmd) {
+        addCommand(label, help, cmd, false);
+    }
+
+    public void registerCommand(String label, String help, Command cmd, boolean needsAuth) {
+        addCommand(label, help, cmd, needsAuth);
+    }
+
+    public void registerCommand(String label, String help, NoArgsCommand cmd, boolean needsAuth) {
+        addCommand(label, help, cmd, needsAuth);
+    }
+
+    public void registerCommand(String label, String help, SingleArgCommand cmd, boolean needsAuth) {
+        addCommand(label, help, cmd, needsAuth);
+    }
+
+    /**
+     * Internally registers commands
+     * @param label The command name
+     * @param help The help message
+     * @param cmd The command function
+     * @param needsAuth Whether authentication is required to run this command
+     */
+    protected void addCommand(String label, String help, Command cmd, boolean needsAuth) {
+        commands.put(label.toUpperCase(), new CommandInfo(cmd, help, needsAuth));
+    }
+
+    /**
+     * Gets the help message from a command
+     * @param label The command name
+     */
+    public String getHelpMessage(String label) {
+        CommandInfo info = commands.get(label);
+        return info != null ? info.help : null;
+    }
+
     /**
      * Processes commands
      */
-    protected boolean process(String[] cmd) {
+    protected void process(String[] cmd) {
+        CommandInfo info = commands.get(cmd[0]);
+
+        if(info == null) {
+            sendResponse(502, "Unknown command");
+            return;
+        } else if(info.needsAuth && !conHandler.isAuthenticated()) {
+            sendResponse(530, "Needs authentication");
+            return;
+        }
+
         try {
-            if(conHandler.onCommand(cmd)) return true;
-            if(fileHandler.onCommand(cmd)) return true;
+            info.command.run(cmd);
         } catch(ResponseException ex) {
             sendResponse(ex.getCode(), ex.getMessage());
-            return true;
         } catch(FileNotFoundException ex) {
             sendResponse(550, ex.getMessage());
-            return true;
         } catch(IOException ex) {
             sendResponse(450, ex.getMessage());
-            return true;
         } catch(Exception ex) {
             sendResponse(451, ex.getMessage());
             ex.printStackTrace();
-            return true;
         }
-
-        return false;
     }
 
     /**
@@ -240,13 +296,7 @@ public class FTPConnection implements Closeable {
 
         String[] cmd = line.split("\\s+");
         cmd[0] = cmd[0].toUpperCase();
-
-        if(!process(cmd)) {
-            System.out.println("Unknown command: " + line);//TODO remove debug
-            sendResponse(502, "Unknown command");
-        } else {
-            System.out.println("Command: " + line);
-        }
+        process(cmd);
     }
 
     /**
@@ -259,7 +309,6 @@ public class FTPConnection implements Closeable {
         }
 
         conHandler.onDisconnected();
-        fileHandler.onDisconnected();
 
         con.close();
     }

@@ -2,7 +2,6 @@ package guichaguri.minimalftp.handler;
 
 import guichaguri.minimalftp.FTPConnection;
 import guichaguri.minimalftp.Utils;
-import guichaguri.minimalftp.api.ICommandHandler;
 import guichaguri.minimalftp.api.IFileSystem;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -14,7 +13,7 @@ import java.util.UUID;
  * @author Guilherme Chaguri
  */
 @SuppressWarnings("unchecked")
-public class FileHandler implements ICommandHandler {
+public class FileHandler {
 
     private final FTPConnection con;
 
@@ -36,61 +35,25 @@ public class FileHandler implements ICommandHandler {
         this.cwd = fs.getRoot();
     }
 
-    @Override
-    public void onConnected() throws IOException {
-
-    }
-
-    @Override
-    public boolean onCommand(String[] cmd) throws IOException {
-        if(cmd[0].equals("CWD")) { // Change Working Dir (CWD <file>)
-            cwd(cmd[1]);
-        } else if(cmd[0].equals("CDUP")) { // Change to Parent Dir (CDUP)
-            cdup();
-        } else if(cmd[0].equals("PWD")) { // Retrieve Working Dir (PWD)
-            pwd();
-        } else if(cmd[0].equals("MKD")) { // Create Directory (MKD <file>)
-            mkd(cmd[1]);
-        } else if(cmd[0].equals("RMD")) { // Delete Directory (DELE <file>)
-            rmd(cmd[1]);
-        } else if(cmd[0].equals("DELE")) { // Delete File (DELE <file>)
-            dele(cmd[1]);
-        } else if(cmd[0].equals("LIST")) { // List Files (LIST [file])
-            list(cmd.length > 1 ? cmd[1] : null);
-        } else if(cmd[0].equals("NLST")) { // List File Names (NLST [file])
-            nlst(cmd.length > 1 ? cmd[1] : null);
-        } else if(cmd[0].equals("RETR")) { // Retrieve File (RETR <file>)
-            retr(cmd[1]);
-        } else if(cmd[0].equals("STOR")) { // Store File (STOR <file>)
-            stor(cmd[1]);
-        } else if(cmd[0].equals("STOU")) { // Store Random File (STOU [file])
-            stou(cmd.length > 1 ? cmd[1] : null);
-        } else if(cmd[0].equals("APPE")) { // Append File (APPE <file>)
-            appe(cmd[1]);
-        } else if(cmd[0].equals("ALLO")) { // Allocate Space (ALLO <size>)
-            allo();
-        } else if(cmd[0].equals("RNFR")) { // Rename From (RNFR <file>)
-            rnfr(cmd[1]);
-        } else if(cmd[0].equals("RNTO")) { // Rename To (RNTO <file>)
-            rnto(cmd[1]);
-        } else if(cmd[0].equals("SITE")) { // Special Commands (SITE <cmd>)
-            if(cmd[1].equals("CHMOD")) { // Change Permissions (SITE CHMOD <perm> <file>)
-                site_chmod(cmd[2], cmd[3]);
-            }
-        } else if(cmd[0].equals("MDTM")) { // Modification Time (MDTM <file>)
-            mdtm(cmd[1]);
-        } else if(cmd[0].equals("SIZE")) { // File Size (SIZE <file>)
-            size(cmd[1]);
-        } else {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public void onDisconnected() throws IOException {
-
+    public void registerCommands() {
+        con.registerCommand("CWD", "CWD <file>", this::cwd); // Change Working Directory
+        con.registerCommand("CDUP", "CDUP", this::cdup); // Change to Parent Directory
+        con.registerCommand("PWD", "PWD", this::pwd); // Retrieve Working Directory
+        con.registerCommand("MKD", "MKD <file>", this::mkd); // Create Directory
+        con.registerCommand("RMD", "RMD <file>", this::rmd); // Delete Directory
+        con.registerCommand("DELE", "DELE <file>", this::dele); // Delete File
+        con.registerCommand("LIST", "LIST [file]", this::list); // List Files
+        con.registerCommand("NLST", "NLST [file]", this::nlst); // List File Names
+        con.registerCommand("RETR", "RETR <file>", this::retr); // Retrieve File
+        con.registerCommand("STOR", "STOR <file>", this::stor); // Store File
+        con.registerCommand("STOU", "STOU [file]", this::stou); // Store Random File
+        con.registerCommand("APPE", "APPE <file>", this::appe); // Append File
+        con.registerCommand("ALLO", "ALLO <size>", this::allo); // Allocate Space
+        con.registerCommand("RNFR", "RNFR <file>", this::rnfr); // Rename From
+        con.registerCommand("RNTO", "RNTO <file>", this::rnto); // Rename To
+        con.registerCommand("SITE", "SITE <cmd>", this::site); // Special Commands
+        con.registerCommand("MDTM", "MDTM <file>", this::mdtm); // Modification Time
+        con.registerCommand("SIZE", "SIZE <file>", this::size); // File Size
     }
 
     private Object getFile(String path) throws IOException {
@@ -103,11 +66,6 @@ public class FileHandler implements ICommandHandler {
         } else {
             return fs.findFile(cwd, path);
         }
-    }
-
-    private void site_chmod(String perm, String file) throws IOException {
-        fs.chmod(getFile(file), Utils.fromOctal(perm));
-        con.sendResponse(200, "The file permissions were successfully changed");
     }
 
     private void cwd(String path) throws IOException {
@@ -249,6 +207,29 @@ public class FileHandler implements ICommandHandler {
 
         fs.mkdirs(file);
         con.sendResponse(257, '"' + path + '"' + " Directory Created");
+    }
+
+    private void site(String[] args) throws IOException {
+        String cmd = args.length > 1 ? args[1].toUpperCase() : null;
+
+        if(cmd == null) {
+            con.sendResponse(500, "Missing the command name");
+            return;
+        } else if(cmd.equals("CHMOD")) {
+            if(args.length > 2) {
+                site_chmod(args[2], args[3]);
+                return;
+            }
+        } else {
+            con.sendResponse(504, "Unknown site command");
+            return;
+        }
+        con.sendResponse(501, "Missing parameters");
+    }
+
+    private void site_chmod(String perm, String file) throws IOException {
+        fs.chmod(getFile(file), Utils.fromOctal(perm));
+        con.sendResponse(200, "The file permissions were successfully changed");
     }
 
     private void mdtm(String path) throws IOException {

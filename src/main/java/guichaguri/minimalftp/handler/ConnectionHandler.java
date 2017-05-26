@@ -1,7 +1,6 @@
 package guichaguri.minimalftp.handler;
 
 import guichaguri.minimalftp.FTPConnection;
-import guichaguri.minimalftp.api.ICommandHandler;
 import guichaguri.minimalftp.api.IUserAuthenticator;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -10,7 +9,7 @@ import java.net.Socket;
 /**
  * @author Guilherme Chaguri
  */
-public class ConnectionHandler implements ICommandHandler {
+public class ConnectionHandler {
 
     private final FTPConnection con;
 
@@ -54,7 +53,6 @@ public class ConnectionHandler implements ICommandHandler {
         }
     }
 
-    @Override
     public void onConnected() throws IOException {
         IUserAuthenticator auth = con.getServer().getAuthenticator();
 
@@ -70,48 +68,35 @@ public class ConnectionHandler implements ICommandHandler {
         }
     }
 
-    @Override
-    public boolean onCommand(String[] cmd) throws IOException {
-        if(cmd[0].equals("NOOP")) { // Ping (NOOP)
-            con.sendResponse(200, "OK");
-        } else if(cmd[0].equals("QUIT")) { // Quit (QUIT)
-            quit();
-        } else if(cmd[0].equals("REIN")) { // Logout (REIN)
-            rein();
-        } else if(cmd[0].equals("USER")) { // Set Username (USER <username>)
-            user(cmd[1]);
-        } else if(cmd[0].equals("PASS")) { // Set Password (PASS <password>)
-            pass(cmd[1]);
-        } else if(!authenticated) {
-            con.sendResponse(530, "Needs authentication");
-        } else if(cmd[0].equals("ACCT")) { // Account Info (ACCT <info>)
-            con.sendResponse(230, "Logged in!");
-        } else if(cmd[0].equals("SYST")) { // System Information (SYST)
-            con.sendResponse(215, "UNIX Type: L8"); // Generic System Info
-        } else if(cmd[0].equals("PORT")) { // Active Mode (PORT <host-port>)
-            port(cmd[1]);
-        } else if(cmd[0].equals("PASV")) { // Passive Mode (PASV)
-            pasv();
-        } else if(cmd[0].equals("TYPE")) { // Binary Flag (TYPE <type>)
-            type(cmd[1]);
-        } else if(cmd[0].equals("STRU")) { // Structure Type (STRU <type>)
-            stru(cmd[1]);
-        } else if(cmd[0].equals("MODE")) { // Change Mode (MODE <mode>)
-            mode(cmd[1]);
-        } else if(cmd[0].equals("STAT")) { // Statistics (STAT)
-            stat();
-        } else {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
     public void onDisconnected() throws IOException {
         if(passiveServer != null) {
             passiveServer.close();
         }
+    }
+
+    public void registerCommands() {
+        con.registerCommand("NOOP", "NOOP", this::noop, false); // Ping
+        con.registerCommand("HELP", "HELP <command>", this::help, false); // Command Help
+        con.registerCommand("QUIT", "QUIT", this::quit, false); // Quit
+        con.registerCommand("REIN", "REIN", this::rein, false); // Logout
+        con.registerCommand("USER", "USER <username>", this::user, false); // Set Username
+        con.registerCommand("PASS", "PASS <password>", this::pass, false); // Set Password
+        con.registerCommand("ACCT", "ACCT <info>", this::acct); // Account Info
+        con.registerCommand("SYST", "SYST", this::syst); // System Information
+        con.registerCommand("PORT", "PORT <host-port>", this::port); // Active Mode
+        con.registerCommand("PASV", "PASV", this::pasv); // Passive Mode
+        con.registerCommand("TYPE", "TYPE <type>", this::type); // Binary Flag
+        con.registerCommand("STRU", "STRU <type>", this::stru); // Structure Type
+        con.registerCommand("MODE", "MODE <mode>", this::mode); // Change Mode
+        con.registerCommand("STAT", "STAT", this::stat); // Statistics
+    }
+
+    private void noop() {
+        con.sendResponse(200, "OK");
+    }
+
+    private void help(String command) {
+        con.sendResponse(214, con.getHelpMessage(command));
     }
 
     private void type(String type) throws IOException {
@@ -182,6 +167,14 @@ public class ConnectionHandler implements ICommandHandler {
             con.sendResponse(530, "Authentication failed");
             con.close();
         }
+    }
+
+    private void acct(String info) {
+        con.sendResponse(230, "Logged in!");
+    }
+
+    private void syst() {
+        con.sendResponse(215, "UNIX Type: L8"); // Generic System Info
     }
 
     private void rein() {
