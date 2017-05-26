@@ -150,8 +150,6 @@ public class FTPServer implements Closeable {
      * Called when a connection is created
      */
     protected void addConnection(FTPConnection con) {
-        System.out.println("New connection: " + con.getAddress().toString());//TODO remove debug
-
         synchronized(connections) {
             connections.add(con);
         }
@@ -161,8 +159,6 @@ public class FTPServer implements Closeable {
      * Called when a connection is terminated
      */
     protected void removeConnection(FTPConnection con) {
-        System.out.println("Removing connection " + con.getAddress().toString());//TODO remove debug
-
         synchronized(connections) {
             connections.remove(con);
         }

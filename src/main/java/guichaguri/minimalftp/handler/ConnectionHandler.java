@@ -1,12 +1,15 @@
 package guichaguri.minimalftp.handler;
 
 import guichaguri.minimalftp.FTPConnection;
+import guichaguri.minimalftp.Utils;
 import guichaguri.minimalftp.api.IUserAuthenticator;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 /**
+ * Handles special connection-based commands
  * @author Guilherme Chaguri
  */
 public class ConnectionHandler {
@@ -70,7 +73,8 @@ public class ConnectionHandler {
 
     public void onDisconnected() throws IOException {
         if(passiveServer != null) {
-            passiveServer.close();
+            Utils.closeQuietly(passiveServer);
+            passiveServer = null;
         }
     }
 
@@ -96,10 +100,12 @@ public class ConnectionHandler {
     }
 
     private void help(String command) {
-        con.sendResponse(214, con.getHelpMessage(command));
+        con.sendResponse(214, con.getHelpMessage(command.toUpperCase()));
     }
 
     private void type(String type) throws IOException {
+        type = type.toUpperCase();
+
         if(type.startsWith("A")) {
             ascii = true;
         } else if(type.startsWith("L") || type.startsWith("I")) {
@@ -112,7 +118,7 @@ public class ConnectionHandler {
     }
 
     private void stru(String structure) throws IOException {
-        if(structure.equals("F")) {
+        if(structure.equalsIgnoreCase("F")) {
             con.sendResponse(200, "The structure type was set to file");
         } else {
             con.sendResponse(504, "Unsupported structure type");
@@ -205,7 +211,10 @@ public class ConnectionHandler {
         String host = passiveServer.getInetAddress().getHostAddress();
         int port = passiveServer.getLocalPort();
 
-        if(host.equals("0.0.0.0")) host = "127.0.0.1";//TODO remove
+        if(host.equals("0.0.0.0")) {
+            // Sends a valid address instead of a wildcard
+            host = InetAddress.getLocalHost().getHostAddress();
+        }
 
         String[] addr = host.split("\\.");
 
@@ -221,17 +230,27 @@ public class ConnectionHandler {
         activeHost = args[0] + "." + args[1] + "." + args[2] + "." + args[3];
         activePort = Integer.parseInt(args[4]) * 256 + Integer.parseInt(args[5]);
         passive = false;
+
+        if(passiveServer != null) {
+            Utils.closeQuietly(passiveServer);
+            passiveServer = null;
+        }
     }
 
     private void stat() throws IOException {
         con.sendResponse(211, "Sending the status...");
-        String data = "";
+
         String ip = con.getAddress().getHostAddress();
-        data += "Connected from " + ip + " (" + ip + ")";
-        data += "Logged in " + (username != null ? "as " + username : "anonymously");
-        data += "TYPE: " + (ascii ? "ASCII" : "Binary") + ", STRUcture: File, Mode: Stream";
-        data += "Total bytes transferred for session: " + con.getBytesTransferred();
+        String user = username != null ? "as " + username : "anonymously";
+        String type = ascii ? "ASCII" : "Binary";
+
+        String data = "";
+        data += "Connected from " + ip + " (" + ip + ")\r\n";
+        data += "Logged in " + user + "\r\n";
+        data += "TYPE: " + type + ", STRUcture: File, MODE: Stream\r\n";
+        data += "Total bytes transferred for session: " + con.getBytesTransferred() + "\r\n";
         con.sendData(data.getBytes("UTF-8"));
+
         con.sendResponse(211, "Status sent!");
     }
 

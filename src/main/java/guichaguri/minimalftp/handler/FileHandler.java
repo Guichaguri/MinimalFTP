@@ -4,12 +4,10 @@ import guichaguri.minimalftp.FTPConnection;
 import guichaguri.minimalftp.Utils;
 import guichaguri.minimalftp.api.IFileSystem;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 import java.util.UUID;
 
 /**
+ * Handles file management commands
  * @author Guilherme Chaguri
  */
 @SuppressWarnings("unchecked")
@@ -93,8 +91,14 @@ public class FileHandler {
     }
 
     private void rnto(String path) throws IOException {
+        if(rnFile == null) {
+            con.sendResponse(503, "No rename request was received");
+            return;
+        }
+
         fs.rename(rnFile, getFile(path));
         rnFile = null;
+
         con.sendResponse(250, "File successfully renamed");
     }
 
@@ -106,14 +110,14 @@ public class FileHandler {
         con.sendResponse(226, "File received!");
     }
 
-    private void stou(String path) throws IOException {
+    private void stou(String[] args) throws IOException {
         Object file = null;
         String ext = ".tmp";
 
-        if(path != null) {
-            file = getFile(path);
-            int i = path.lastIndexOf('.');
-            if(i > 0) ext = path.substring(i);
+        if(args.length > 1) {
+            file = getFile(args[1]);
+            int i = args[1].lastIndexOf('.');
+            if(i > 0) ext = args[1].substring(i);
         }
 
         while(file != null && fs.exists(file)) {
@@ -145,11 +149,11 @@ public class FileHandler {
         con.sendResponse(226, "File sent!");
     }
 
-    private void list(String path) throws IOException {
+    private void list(String[] args) throws IOException {
         con.sendResponse(150, "Sending file list...");
 
+        Object dir = args.length > 1 ? getFile(args[1]) : cwd;
         String data = "";
-        Object dir = path == null ? cwd : getFile(path);
 
         for(Object file : fs.listFiles(dir)) {
             data += Utils.format(fs, file);
@@ -159,10 +163,10 @@ public class FileHandler {
         con.sendResponse(226, "The list was sent");
     }
 
-    private void nlst(String path) throws IOException {
+    private void nlst(String[] args) throws IOException {
         con.sendResponse(150, "Sending file list...");
 
-        Object dir = path == null ? cwd : getFile(path);
+        Object dir = args.length > 1 ? getFile(args[1]) : cwd;
         String data = "";
 
         for(Object file : fs.listFiles(dir)) {
@@ -227,19 +231,15 @@ public class FileHandler {
         con.sendResponse(501, "Missing parameters");
     }
 
-    private void site_chmod(String perm, String file) throws IOException {
-        fs.chmod(getFile(file), Utils.fromOctal(perm));
+    private void site_chmod(String perm, String path) throws IOException {
+        fs.chmod(getFile(path), Utils.fromOctal(perm));
         con.sendResponse(200, "The file permissions were successfully changed");
     }
 
     private void mdtm(String path) throws IOException {
         Object file = getFile(path);
 
-        Date date = new Date(fs.getLastModified(file));
-        // TODO cache a SimpleDateFormat instance
-        String time = new SimpleDateFormat("YYYYMMDDHHmmss", Locale.ENGLISH).format(date);
-
-        con.sendResponse(213, time);
+        con.sendResponse(213, Utils.toMdtmTimestamp(fs.getLastModified(file)));
     }
 
     private void size(String path) throws IOException {

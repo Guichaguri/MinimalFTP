@@ -23,6 +23,7 @@ public class Utils {
     public static final int TYPE_WRITE = 1;
     public static final int TYPE_EXECUTE = 0;
 
+    private static final SimpleDateFormat mdtmFormat = new SimpleDateFormat("YYYYMMDDHHmmss", Locale.ENGLISH);
     private static final SimpleDateFormat hourFormat = new SimpleDateFormat("MMM dd HH:mm", Locale.ENGLISH);
     private static final SimpleDateFormat yearFormat = new SimpleDateFormat("MMM dd YYYY", Locale.ENGLISH);
     private static final long sixMonths = 183L * 24L * 60L * 60L * 1000L;
@@ -34,6 +35,10 @@ public class Utils {
             return yearFormat.format(date);
         }
         return hourFormat.format(date);
+    }
+
+    public static String toMdtmTimestamp(long time) {
+        return mdtmFormat.format(new Date(time));
     }
 
     public static <F> String format(IFileSystem<F> fs, F file) {
