@@ -20,7 +20,47 @@ The required minimum implementation is already done, however, there are still co
 * [RFC 4217](https://tools.ietf.org/html/rfc4217) - Securing FTP with TLS
 * [RFC 7151](https://tools.ietf.org/html/rfc7151) - File Transfer Protocol HOST Command for Virtual Hosts (0/1)
 
-## Installation
-### Maven
+# Usage
 
-### Gradle
+### Dependency
+#### Maven
+```xml
+<dependency>
+  <groupId>guichaguri.minimalftp</groupId>
+  <artifactId>minimalftp</artifactId>
+  <version>1.0.0</version>
+  <type>pom</type>
+</dependency>
+```
+
+#### Gradle
+```groovy
+compile 'guichaguri.minimalftp:minimalftp:1.0.0'
+```
+
+#### Ivy
+```xml
+<dependency org='guichaguri.minimalftp' name='minimalftp' rev='1.0.0'>
+  <artifact name='minimalftp' ext='pom' />
+</dependency>
+```
+
+### API
+Check out more examples [here](https://github.com/Guichaguri/MinimalFTP/tree/master/src/test/java/guichaguri/minimalftp) :)
+
+```java
+// Uses the current working directory as the root
+File root = new File(System.getProperty("user.dir"));
+
+// Creates a native file system
+NativeFileSystem fs = new NativeFileSystem(root);
+
+// Creates a noop authenticator
+NoOpAuthenticator auth = new NoOpAuthenticator(fs);
+
+// Creates the server with the authenticator
+FTPServer server = new FTPServer(auth);
+
+// Start listening synchronously
+server.listenSync(21);
+```

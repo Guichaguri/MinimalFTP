@@ -1,22 +1,102 @@
 group 'guichaguri.minimalftp'
-version '1.0-SNAPSHOT'
+version '1.0.0'
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
+    }
+}
 
 apply plugin: 'java'
+apply plugin: 'com.jfrog.bintray'
 apply plugin: 'maven-publish'
 
 sourceCompatibility = 1.8
 
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+def publishSettings = new Properties()
+def propFile = file('publish.properties');
+if(propFile.exists()) {
+    publishSettings.load(new FileInputStream(propFile))
+}
+
+bintray {
+    user = publishSettings.bintray_user
+    key = publishSettings.bintray_key
+    publications = ['MavenBuild']
+    pkg {
+        repo = 'maven'
+        name = 'MinimalFTP'
+        licenses = ['GPL-3.0']
+        vcsUrl = 'https://github.com/Guichaguri/MinimalFTP.git'
+
+        version {
+            name = project.version
+
+            gpg {
+                sign = Boolean.parseBoolean(publishSettings.gpg_sign)
+                passphrase = publishSettings.gpg_passphrase
+            }
+
+            mavenCentralSync {
+                sync = Boolean.parseBoolean(publishSettings.maven_sync)
+                user = publishSettings.maven_user
+                password = publishSettings.maven_password
+            }
+        }
+    }
+}
+
+def pomConfig = {
+    licenses {
+        license {
+            name "GNU General Public License, Version 3.0"
+            url "https://www.gnu.org/licenses/gpl.txt"
+            distribution "repo"
+        }
+    }
+    developers {
+        developer {
+            id "Guichaguri"
+            name "Guilherme Chaguri"
+            email "guichaguri@gmail.com"
         }
     }
 
-    repositories {
-        maven {
-            // change to point to your repo, e.g. http://my.org/repo
-            url "$buildDir/repo"
+    scm {
+        url "https://github.com/Guichaguri/MinimalFTP/tree/master"
+    }
+}
+
+// Create the publication with the pom configuration:
+publishing {
+    publications {
+        MavenBuild(MavenPublication) {
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
+            groupId project.group
+            artifactId 'minimalftp'
+            version project.version
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('description', 'A lightweight, simple FTP server. Pure Java, no libraries.')
+                root.appendNode('name', project.name)
+                root.appendNode('url', 'https://github.com/Guichaguri/MinimalFTP')
+                root.children().last() + pomConfig
+            }
         }
     }
 }
