@@ -26,54 +26,63 @@ public interface IFileSystem<F extends Object> {
     /**
      * Gets whether the file exists
      * @param file The file object
+     * @return {@code true} if the file exists
      */
     boolean exists(F file);
 
     /**
      * Checks if the file is a directory
      * @param file The file object
+     * @return {@code true} if the file is a directory
      */
     boolean isDirectory(F file);
 
     /**
      * Gets the permission number
      * @param file The file object
+     * @return The octal permission number in decimal
      */
     int getPermissions(F file);
 
     /**
      * Gets the file size
      * @param file The file object
+     * @return The file size in bytes
      */
     long getSize(F file);
 
     /**
-     * Gets the modified time in millis
+     * Gets the modified time.
      * @param file The file object
+     * @return The modified time in millis
      */
     long getLastModified(F file);
 
     /**
-     * Gets the amount of hard links
+     * Gets the amount of hard links.
      * @param file The file object
+     * @return The number of hard links
      */
     int getHardLinks(F file);
 
     /**
      * Gets the file name
      * @param file The file object
+     * @return The file name
      */
     String getName(F file);
 
     /**
      * Gets the file owner
      * @param file The file object
+     * @return The owner name
      */
     String getOwner(F file);
 
     /**
      * Gets the file group
      * @param file The file object
+     * @return The group name
      */
     String getGroup(F file);
 
@@ -82,6 +91,7 @@ public interface IFileSystem<F extends Object> {
      * This method should check for file access permissions
      *
      * @param file The file object
+     * @return The parent file
      * @throws java.io.FileNotFoundException When there's no permission to access the file
      * @throws IOException When an error occurs
      */
@@ -92,6 +102,7 @@ public interface IFileSystem<F extends Object> {
      * This method should check for file access permissions
      *
      * @param dir The directory file object
+     * @return A file array
      * @throws IOException When an error occurs
      */
     F[] listFiles(F dir) throws IOException;
@@ -101,6 +112,7 @@ public interface IFileSystem<F extends Object> {
      * This method should check for file access permissions
      *
      * @param path The path
+     * @return The found file
      * @throws java.io.FileNotFoundException When there's no permission to access the file or the file doesn't exist
      * @throws IOException When an error occurs
      */
@@ -112,6 +124,7 @@ public interface IFileSystem<F extends Object> {
      *
      * @param cwd The base directory
      * @param path The path
+     * @return The found file
      * @throws java.io.FileNotFoundException When there's no permission to access the file or the file doesn't exist
      * @throws IOException When an error occurs
      */
@@ -120,6 +133,7 @@ public interface IFileSystem<F extends Object> {
     /**
      * Reads a file into an input stream
      * @param file The file object
+     * @return The input stream of the file
      * @throws IOException When an error occurs
      */
     InputStream readFile(F file) throws IOException;
@@ -130,6 +144,7 @@ public interface IFileSystem<F extends Object> {
      *
      * @param file The file object
      * @param append Whether the bytes should be written at the end of the file
+     * @return The output stream of the file
      * @throws IOException When an error occurs
      */
     OutputStream writeFile(F file, boolean append) throws IOException;

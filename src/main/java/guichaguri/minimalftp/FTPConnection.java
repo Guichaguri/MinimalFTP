@@ -33,7 +33,15 @@ public class FTPConnection implements Closeable {
 
     protected long bytesTransferred = 0;
 
-    protected FTPConnection(FTPServer server, Socket con) throws IOException {
+    /**
+     * Creates a new FTP connection.
+     * Usually initialized by a {@link FTPServer}
+     *
+     * @param server The server which received the connection
+     * @param con The connection socket
+     * @throws IOException When an I/O error occurs
+     */
+    public FTPConnection(FTPServer server, Socket con) throws IOException {
         this.server = server;
         this.con = con;
         this.reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
@@ -52,6 +60,7 @@ public class FTPConnection implements Closeable {
 
     /**
      * The server which the connection belongs to
+     * @return The {@link FTPServer} that received this connection
      */
     public FTPServer getServer() {
         return server;
@@ -59,6 +68,7 @@ public class FTPConnection implements Closeable {
 
     /**
      * Gets the connection address
+     * @return The {@link InetAddress} of this connection
      */
     public InetAddress getAddress() {
         return con.getInetAddress();
@@ -66,6 +76,7 @@ public class FTPConnection implements Closeable {
 
     /**
      * Gets the amount of bytes sent or received
+     * @return The number of bytes
      */
     public long getBytesTransferred() {
         return bytesTransferred;
@@ -73,13 +84,15 @@ public class FTPConnection implements Closeable {
 
     /**
      * Whether the connection is authenticated
+     * @return Whether the connection is authenticated
      */
     public boolean isAuthenticated() {
         return conHandler.isAuthenticated();
     }
 
     /**
-     * The username of the connection. May be {@code null}
+     * Gets the username of the connection.
+     * @return The username or {@code null}
      */
     public String getUsername() {
         return conHandler.getUsername();
@@ -87,6 +100,7 @@ public class FTPConnection implements Closeable {
 
     /**
      * The file system of the connection. May be {@code null} when it's still authenticating
+     * @return The current file system
      */
     public IFileSystem getFileSystem() {
         return fileHandler.getFileSystem();
@@ -199,15 +213,15 @@ public class FTPConnection implements Closeable {
     }
 
     public void registerCommand(String label, String help, Command cmd) {
-        addCommand(label, help, cmd, false);
+        addCommand(label, help, cmd, true);
     }
 
     public void registerCommand(String label, String help, NoArgsCommand cmd) {
-        addCommand(label, help, cmd, false);
+        addCommand(label, help, cmd, true);
     }
 
     public void registerCommand(String label, String help, SingleArgCommand cmd) {
-        addCommand(label, help, cmd, false);
+        addCommand(label, help, cmd, true);
     }
 
     public void registerCommand(String label, String help, Command cmd, boolean needsAuth) {
@@ -236,6 +250,7 @@ public class FTPConnection implements Closeable {
     /**
      * Gets the help message from a command
      * @param label The command name
+     * @return The help message or {@code null} if the command was not found
      */
     public String getHelpMessage(String label) {
         CommandInfo info = commands.get(label);
@@ -244,6 +259,7 @@ public class FTPConnection implements Closeable {
 
     /**
      * Processes commands
+     * @param cmd The command and its arguments
      */
     protected void process(String[] cmd) {
         CommandInfo info = commands.get(cmd[0]);
@@ -302,6 +318,7 @@ public class FTPConnection implements Closeable {
     /**
      * Stops the connection, but does not removes it from the list.
      * For a complete cleanup, use {@link #close()} instead
+     * @throws IOException When an I/O error occurs
      */
     protected void stop() throws IOException {
         if(!thread.isInterrupted()) {

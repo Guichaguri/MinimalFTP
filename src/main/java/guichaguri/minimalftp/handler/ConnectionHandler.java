@@ -61,13 +61,13 @@ public class ConnectionHandler {
 
         if(!auth.needsUsername(con)) {
             if(authenticate(auth, null)) {
-                con.sendResponse(220, "Ready!");
+                con.sendResponse(230, "Ready!");
             } else {
                 con.sendResponse(421, "Authentication failed");
                 con.close();
             }
         } else {
-            con.sendResponse(530, "Waiting for authentication...");
+            con.sendResponse(220, "Waiting for authentication...");
         }
     }
 

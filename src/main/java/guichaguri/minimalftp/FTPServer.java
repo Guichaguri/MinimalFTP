@@ -79,7 +79,7 @@ public class FTPServer implements Closeable {
      * Starts the FTP server asynchronously
      *
      * @param port The server port
-     * @throws IOException
+     * @throws IOException When an error occurs while starting the server
      */
     public void listen(int port) throws IOException {
         listen(null, port);
@@ -90,7 +90,7 @@ public class FTPServer implements Closeable {
      *
      * @param address The server address or {@code null} for a local address
      * @param port The server port or {@code 0} to automatically allocate the port
-     * @throws IOException
+     * @throws IOException When an error occurs while starting the server
      */
     public void listen(InetAddress address, int port) throws IOException {
         if(auth == null) throw new NullPointerException("The Authenticator is null");
@@ -99,6 +99,7 @@ public class FTPServer implements Closeable {
         socket = new ServerSocket(port, 50, address);
 
         serverThread = new ServerThread();
+        serverThread.setDaemon(true);
         serverThread.start();
     }
 
@@ -108,7 +109,7 @@ public class FTPServer implements Closeable {
      * Connections to the server will still create new threads
      *
      * @param port The server port
-     * @throws IOException
+     * @throws IOException When an error occurs while starting the server
      */
     public void listenSync(int port) throws IOException {
         listenSync(null, port);
@@ -121,7 +122,7 @@ public class FTPServer implements Closeable {
      *
      * @param address The server address or {@code null} for a local address
      * @param port The server port or {@code 0} to automatically allocate the port
-     * @throws IOException
+     * @throws IOException When an error occurs while starting the server
      */
     public void listenSync(InetAddress address, int port) throws IOException {
         if(auth == null) throw new NullPointerException("The Authenticator is null");
@@ -139,26 +140,29 @@ public class FTPServer implements Closeable {
      */
     protected void update() {
         try {
-            Socket connection = socket.accept();
-            addConnection(new FTPConnection(this, connection));
+            addConnection(socket.accept());
         } catch(IOException ex) {
-            // The server is probably closed
+            // The server was probably closed
         }
     }
 
     /**
      * Called when a connection is created
+     * @param socket The connection socket
+     * @throws IOException When an error occurs
      */
-    protected void addConnection(FTPConnection con) {
+    protected void addConnection(Socket socket) throws IOException {
         synchronized(connections) {
-            connections.add(con);
+            connections.add(new FTPConnection(this, socket));
         }
     }
 
     /**
      * Called when a connection is terminated
+     * @param con The FTP connection
+     * @throws IOException When an error occurs
      */
-    protected void removeConnection(FTPConnection con) {
+    protected void removeConnection(FTPConnection con) throws IOException {
         synchronized(connections) {
             connections.remove(con);
         }

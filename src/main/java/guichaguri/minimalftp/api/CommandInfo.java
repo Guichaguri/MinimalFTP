@@ -23,6 +23,11 @@ public class CommandInfo {
     @FunctionalInterface
     public interface Command {
 
+        /**
+         * Runs a command that accepts all arguments
+         * @param args An array with the command label and the arguments
+         * @throws IOException When an error occurs
+         */
         void run(String[] args) throws IOException;
 
     }
@@ -33,6 +38,10 @@ public class CommandInfo {
     @FunctionalInterface
     public interface NoArgsCommand extends Command {
 
+        /**
+         * Runs a command that doesn't accept arguments
+         * @throws IOException When an error occurs
+         */
         void run() throws IOException;
 
         default void run(String[] args) throws IOException {
@@ -47,6 +56,11 @@ public class CommandInfo {
     @FunctionalInterface
     public interface SingleArgCommand extends Command {
 
+        /**
+         * Runs a command that accepts only a single argument
+         * @param argument The argument
+         * @throws IOException When an error occurs
+         */
         void run(String argument) throws IOException;
 
         default void run(String[] args) throws IOException {

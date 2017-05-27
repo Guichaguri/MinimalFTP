@@ -211,11 +211,6 @@ public class FileHandler {
     private void mkd(String path) throws IOException {
         Object file = getFile(path);
 
-        if(!fs.isDirectory(file)) {
-            con.sendResponse(550, "Not a directory");
-            return;
-        }
-
         fs.mkdirs(file);
         con.sendResponse(257, '"' + path + '"' + " Directory Created");
     }
