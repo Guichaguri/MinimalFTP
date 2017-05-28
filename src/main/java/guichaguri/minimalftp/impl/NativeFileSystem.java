@@ -20,11 +20,14 @@ public class NativeFileSystem implements IFileSystem<File> {
     private final File rootDir;
 
     /**
-     * Creates a native file system
+     * Creates a native file system.
+     * If the root directory does not exists, it will be created
      * @param rootDir The root directory
      */
     public NativeFileSystem(File rootDir) {
         this.rootDir = rootDir;
+
+        if(!rootDir.exists()) rootDir.mkdirs();
     }
 
     @Override

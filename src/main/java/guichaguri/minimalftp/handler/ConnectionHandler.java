@@ -99,8 +99,20 @@ public class ConnectionHandler {
         con.sendResponse(200, "OK");
     }
 
-    private void help(String command) {
-        con.sendResponse(214, con.getHelpMessage(command.toUpperCase()));
+    private void help(String[] cmd) {
+        if(cmd.length <= 1) {
+            con.sendResponse(501, "Missing parameters");
+        }
+
+        String command = cmd[1].toUpperCase();
+        String help;
+
+        if(cmd.length > 2 && command.equals("SITE")) {
+            help = con.getSiteHelpMessage(cmd[2].toUpperCase());
+        } else {
+            help = con.getHelpMessage(command);
+        }
+        con.sendResponse(214, help);
     }
 
     private void type(String type) throws IOException {

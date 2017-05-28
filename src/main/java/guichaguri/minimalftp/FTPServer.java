@@ -1,5 +1,6 @@
 package guichaguri.minimalftp;
 
+import guichaguri.minimalftp.api.IFTPListener;
 import guichaguri.minimalftp.api.IUserAuthenticator;
 import java.io.Closeable;
 import java.io.IOException;
@@ -17,6 +18,7 @@ import java.util.List;
 public class FTPServer implements Closeable {
 
     protected final List<FTPConnection> connections = Collections.synchronizedList(new ArrayList<FTPConnection>());
+    protected final List<IFTPListener> listeners = Collections.synchronizedList(new ArrayList<IFTPListener>());
 
     protected IUserAuthenticator auth = null;
 
@@ -73,6 +75,26 @@ public class FTPServer implements Closeable {
     public void setAuthenticator(IUserAuthenticator auth) {
         if(auth == null) throw new NullPointerException("The Authenticator is null");
         this.auth = auth;
+    }
+
+    /**
+     * Adds an {@link IFTPListener} to the server
+     * @param listener The listener instance
+     */
+    public void addListener(IFTPListener listener) {
+        synchronized(listeners) {
+            listeners.add(listener);
+        }
+    }
+
+    /**
+     * Removes an {@link IFTPListener} to the server
+     * @param listener The listener instance
+     */
+    public void removeListener(IFTPListener listener) {
+        synchronized(listeners) {
+            listeners.remove(listener);
+        }
     }
 
     /**
@@ -152,8 +174,15 @@ public class FTPServer implements Closeable {
      * @throws IOException When an error occurs
      */
     protected void addConnection(Socket socket) throws IOException {
+        FTPConnection con = new FTPConnection(this, socket);
+
+        synchronized(listeners) {
+            for(IFTPListener l : listeners) {
+                l.onConnected(con);
+            }
+        }
         synchronized(connections) {
-            connections.add(new FTPConnection(this, socket));
+            connections.add(con);
         }
     }
 
@@ -163,6 +192,11 @@ public class FTPServer implements Closeable {
      * @throws IOException When an error occurs
      */
     protected void removeConnection(FTPConnection con) throws IOException {
+        synchronized(listeners) {
+            for(IFTPListener l : listeners) {
+                l.onDisconnected(con);
+            }
+        }
         synchronized(connections) {
             connections.remove(con);
         }

@@ -49,7 +49,8 @@ public class FileHandler {
         con.registerCommand("ALLO", "ALLO <size>", this::allo); // Allocate Space
         con.registerCommand("RNFR", "RNFR <file>", this::rnfr); // Rename From
         con.registerCommand("RNTO", "RNTO <file>", this::rnto); // Rename To
-        con.registerCommand("SITE", "SITE <cmd>", this::site); // Special Commands
+
+        con.registerSiteCommand("CHMOD", "CHMOD <perm> <file>", this::site_chmod); // Change Permissions
 
         con.registerCommand("MDTM", "MDTM <file>", this::mdtm); // Modification Time (RFC 3659)
         con.registerCommand("SIZE", "SIZE <file>", this::size); // File Size (RFC 3659)
@@ -215,26 +216,13 @@ public class FileHandler {
         con.sendResponse(257, '"' + path + '"' + " Directory Created");
     }
 
-    private void site(String[] args) throws IOException {
-        String cmd = args.length > 1 ? args[1].toUpperCase() : null;
-
-        if(cmd == null) {
-            con.sendResponse(500, "Missing the command name");
-            return;
-        } else if(cmd.equals("CHMOD")) {
-            if(args.length > 2) {
-                site_chmod(args[2], args[3]);
-                return;
-            }
-        } else {
-            con.sendResponse(504, "Unknown site command");
+    private void site_chmod(String[] cmd) throws IOException {
+        if(cmd.length <= 3) {
+            con.sendResponse(501, "Missing parameters");
             return;
         }
-        con.sendResponse(501, "Missing parameters");
-    }
 
-    private void site_chmod(String perm, String path) throws IOException {
-        fs.chmod(getFile(path), Utils.fromOctal(perm));
+        fs.chmod(getFile(cmd[3]), Utils.fromOctal(cmd[2]));
         con.sendResponse(200, "The file permissions were successfully changed");
     }
 

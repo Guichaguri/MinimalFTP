@@ -21,6 +21,7 @@ import java.util.Map;
 public class FTPConnection implements Closeable {
 
     protected final Map<String, CommandInfo> commands = new HashMap<>();
+    protected final Map<String, CommandInfo> siteCommands = new HashMap<>();
 
     protected final FTPServer server;
     protected final Socket con;
@@ -32,6 +33,7 @@ public class FTPConnection implements Closeable {
     protected FileHandler fileHandler;
 
     protected long bytesTransferred = 0;
+    protected boolean responseSent = true;
 
     /**
      * Creates a new FTP connection.
@@ -52,6 +54,8 @@ public class FTPConnection implements Closeable {
 
         this.thread = new ConnectionThread();
         this.thread.start();
+
+        registerCommand("SITE", "SITE <command>", this::site);
 
         this.conHandler.registerCommands();
         this.fileHandler.registerCommands();
@@ -131,6 +135,7 @@ public class FTPConnection implements Closeable {
         } catch(IOException ex) {
             Utils.closeQuietly(this);
         }
+        responseSent = true;
     }
 
     /**
@@ -212,6 +217,18 @@ public class FTPConnection implements Closeable {
         }
     }
 
+    public void registerSiteCommand(String label, String help, Command cmd) {
+        addSiteCommand(label, help, cmd);
+    }
+
+    public void registerSiteCommand(String label, String help, NoArgsCommand cmd) {
+        addSiteCommand(label, help, cmd);
+    }
+
+    public void registerSiteCommand(String label, String help, SingleArgCommand cmd) {
+        addSiteCommand(label, help, cmd);
+    }
+
     public void registerCommand(String label, String help, Command cmd) {
         addCommand(label, help, cmd, true);
     }
@@ -237,7 +254,17 @@ public class FTPConnection implements Closeable {
     }
 
     /**
-     * Internally registers commands
+     * Internally registers a SITE command
+     * @param label The command name
+     * @param help The help message
+     * @param cmd The command function
+     */
+    protected void addSiteCommand(String label, String help, Command cmd) {
+        siteCommands.put(label.toUpperCase(), new CommandInfo(cmd, help, true));
+    }
+
+    /**
+     * Internally registers a command
      * @param label The command name
      * @param help The help message
      * @param cmd The command function
@@ -245,6 +272,16 @@ public class FTPConnection implements Closeable {
      */
     protected void addCommand(String label, String help, Command cmd, boolean needsAuth) {
         commands.put(label.toUpperCase(), new CommandInfo(cmd, help, needsAuth));
+    }
+
+    /**
+     * Gets the help message from a SITE command
+     * @param label The command name
+     * @return The help message or {@code null} if the command was not found
+     */
+    public String getSiteHelpMessage(String label) {
+        CommandInfo info = siteCommands.get(label);
+        return info != null ? info.help : null;
     }
 
     /**
@@ -267,10 +304,38 @@ public class FTPConnection implements Closeable {
         if(info == null) {
             sendResponse(502, "Unknown command");
             return;
-        } else if(info.needsAuth && !conHandler.isAuthenticated()) {
+        }
+
+        processCommand(info, cmd);
+    }
+
+    /**
+     * SITE command
+     * @param cmd The command and its arguments
+     */
+    protected void site(String[] cmd) {
+        if(cmd.length <= 1) {
+            sendResponse(500, "Missing the command name");
+            return;
+        }
+
+        CommandInfo info = siteCommands.get(cmd[1]);
+
+        if(info == null) {
+            sendResponse(504, "Unknown site command");
+            return;
+        }
+
+        processCommand(info, cmd);
+    }
+
+    protected void processCommand(CommandInfo info, String[] cmd) {
+        if(info.needsAuth && !conHandler.isAuthenticated()) {
             sendResponse(530, "Needs authentication");
             return;
         }
+
+        responseSent = false;
 
         try {
             info.command.run(cmd);
@@ -284,6 +349,8 @@ public class FTPConnection implements Closeable {
             sendResponse(451, ex.getMessage());
             ex.printStackTrace();
         }
+
+        if(!responseSent) sendResponse(200, "Done");
     }
 
     /**
