@@ -136,7 +136,7 @@ public class FileHandler {
             file = fs.findFile(cwd, name + ext);
         }
 
-        con.sendResponse(150, "Receiving a file stream for " + fs.getPath(file));
+        con.sendResponse(150, "File: " + fs.getPath(file));
         con.receiveData(fs.writeFile(file, false));
         con.sendResponse(226, "File received!");
     }

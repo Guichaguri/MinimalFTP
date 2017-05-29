@@ -21,6 +21,7 @@ public class FTPServer implements Closeable {
     protected final List<IFTPListener> listeners = Collections.synchronizedList(new ArrayList<IFTPListener>());
 
     protected IUserAuthenticator auth = null;
+    protected int idleTimeout = 5 * 60 * 1000; // 5 minutes
 
     protected ServerSocket socket = null;
     protected ServerThread serverThread = null;
@@ -75,6 +76,17 @@ public class FTPServer implements Closeable {
     public void setAuthenticator(IUserAuthenticator auth) {
         if(auth == null) throw new NullPointerException("The Authenticator is null");
         this.auth = auth;
+    }
+
+    /**
+     * Sets the idle timeout in milliseconds
+     * Connections that are idle (no commands or transfers) for the specified time will be disconnected
+     * The default and recommended time is 5 minutes
+     *
+     * @param idleTimeout The time in milliseconds
+     */
+    public void setTimeout(int idleTimeout) {
+        this.idleTimeout = idleTimeout;
     }
 
     /**
@@ -174,7 +186,7 @@ public class FTPServer implements Closeable {
      * @throws IOException When an error occurs
      */
     protected void addConnection(Socket socket) throws IOException {
-        FTPConnection con = new FTPConnection(this, socket);
+        FTPConnection con = new FTPConnection(this, socket, idleTimeout);
 
         synchronized(listeners) {
             for(IFTPListener l : listeners) {

@@ -1,16 +1,17 @@
 package guichaguri.minimalftp;
 
-import guichaguri.minimalftp.api.IFileSystem;
-import guichaguri.minimalftp.api.ResponseException;
 import guichaguri.minimalftp.api.CommandInfo;
 import guichaguri.minimalftp.api.CommandInfo.Command;
 import guichaguri.minimalftp.api.CommandInfo.NoArgsCommand;
 import guichaguri.minimalftp.api.CommandInfo.SingleArgCommand;
+import guichaguri.minimalftp.api.IFileSystem;
+import guichaguri.minimalftp.api.ResponseException;
 import guichaguri.minimalftp.handler.ConnectionHandler;
 import guichaguri.minimalftp.handler.FileHandler;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,6 +35,9 @@ public class FTPConnection implements Closeable {
 
     protected long bytesTransferred = 0;
     protected boolean responseSent = true;
+    protected boolean transferring = false;
+    protected int timeout = 0;
+    protected long lastUpdate = 0;
 
     /**
      * Creates a new FTP connection.
@@ -41,13 +45,18 @@ public class FTPConnection implements Closeable {
      *
      * @param server The server which received the connection
      * @param con The connection socket
+     * @param idleTimeout The timeout in milliseconds
      * @throws IOException When an I/O error occurs
      */
-    public FTPConnection(FTPServer server, Socket con) throws IOException {
+    public FTPConnection(FTPServer server, Socket con, int idleTimeout) throws IOException {
         this.server = server;
         this.con = con;
         this.reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
         this.writer = new BufferedWriter(new OutputStreamWriter(con.getOutputStream()));
+
+        this.timeout = idleTimeout;
+        this.lastUpdate = System.currentTimeMillis();
+        con.setSoTimeout(timeout);
 
         this.conHandler = new ConnectionHandler(this);
         this.fileHandler = new FileHandler(this);
@@ -145,6 +154,7 @@ public class FTPConnection implements Closeable {
      */
     public void sendData(byte[] data) throws ResponseException {
         if(con.isClosed()) return;
+        transferring = true;
 
         try {
             Socket socket = conHandler.createDataSocket();
@@ -158,6 +168,9 @@ public class FTPConnection implements Closeable {
             Utils.closeQuietly(socket);
         } catch(IOException ex) {
             throw new ResponseException(425, "An error occurred while opening the data connection");
+        } finally {
+            onUpdate();
+            transferring = false;
         }
     }
 
@@ -168,6 +181,7 @@ public class FTPConnection implements Closeable {
      */
     public void sendData(InputStream in) throws ResponseException {
         if(con.isClosed()) return;
+        transferring = true;
 
         try {
             Socket socket = conHandler.createDataSocket();
@@ -186,6 +200,9 @@ public class FTPConnection implements Closeable {
             Utils.closeQuietly(socket);
         } catch(IOException ex) {
             throw new ResponseException(425, "An error occurred while opening the data connection");
+        } finally {
+            onUpdate();
+            transferring = false;
         }
     }
 
@@ -196,6 +213,7 @@ public class FTPConnection implements Closeable {
      */
     public void receiveData(OutputStream out) throws ResponseException {
         if(con.isClosed()) return;
+        transferring = true;
 
         try {
             Socket socket = conHandler.createDataSocket();
@@ -214,6 +232,9 @@ public class FTPConnection implements Closeable {
             Utils.closeQuietly(socket);
         } catch(IOException ex) {
             throw new ResponseException(425, "An error occurred while opening the data connection");
+        } finally {
+            onUpdate();
+            transferring = false;
         }
     }
 
@@ -294,6 +315,10 @@ public class FTPConnection implements Closeable {
         return info != null ? info.help : null;
     }
 
+    protected void onUpdate() {
+        lastUpdate = System.currentTimeMillis();
+    }
+
     /**
      * Processes commands
      * @param cmd The command and its arguments
@@ -366,6 +391,12 @@ public class FTPConnection implements Closeable {
 
         try {
             line = reader.readLine();
+        } catch(SocketTimeoutException ex) {
+            // Check if the socket has timed out
+            if(!transferring && (System.currentTimeMillis() - lastUpdate) >= timeout) {
+                Utils.closeQuietly(this);
+            }
+            return;
         } catch(IOException ex) {
             return;
         }
@@ -405,7 +436,7 @@ public class FTPConnection implements Closeable {
     }
 
     /**
-     * Thread that processes this connection when multithreading is enabled
+     * Thread that processes this connection
      */
     private class ConnectionThread extends Thread {
         @Override
