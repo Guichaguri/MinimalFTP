@@ -1,8 +1,10 @@
 package guichaguri.minimalftp;
 
 import guichaguri.minimalftp.api.IFileSystem;
+import java.io.BufferedInputStream;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -95,6 +97,27 @@ public class Utils {
         } else {
             // Binary - Keep all \r\n as is
             out.write(bytes, 0, len);
+        }
+    }
+
+    public static <F> InputStream readFileSystem(IFileSystem<F> fs, F file, long start, boolean ascii) throws IOException {
+        if(ascii) {
+            InputStream in = new BufferedInputStream(fs.readFile(file, 0));
+            long offset = 0;
+
+            // Count \n as two bytes for skipping
+            while(start >= offset++) {
+                int c = in.read();
+                if(c == -1) {
+                    throw new IOException("Couldn't skip this file. End of the file was reached");
+                } else if(c == '\n') {
+                    offset++;
+                }
+            }
+
+            return in;
+        } else {
+            return fs.readFile(file, start);
         }
     }
 

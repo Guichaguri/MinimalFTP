@@ -4,6 +4,8 @@ import guichaguri.minimalftp.FTPConnection;
 import guichaguri.minimalftp.Utils;
 import guichaguri.minimalftp.api.IFileSystem;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.UUID;
 
 /**
@@ -19,6 +21,7 @@ public class FileHandler {
     private Object cwd = null;
 
     private Object rnFile = null;
+    private long start = 0;
 
     public FileHandler(FTPConnection connection) {
         this.con = connection;
@@ -46,6 +49,7 @@ public class FileHandler {
         con.registerCommand("STOR", "STOR <file>", this::stor); // Store File
         con.registerCommand("STOU", "STOU [file]", this::stou); // Store Random File
         con.registerCommand("APPE", "APPE <file>", this::appe); // Append File
+        con.registerCommand("REST", "REST <bytes>", this::rest); // Restart with a position
         con.registerCommand("ALLO", "ALLO <size>", this::allo); // Allocate Space
         con.registerCommand("RNFR", "RNFR <file>", this::rnfr); // Rename From
         con.registerCommand("RNTO", "RNTO <file>", this::rnto); // Rename To
@@ -114,7 +118,11 @@ public class FileHandler {
         Object file = getFile(path);
 
         con.sendResponse(150, "Receiving a file stream for " + path);
-        con.receiveData(fs.writeFile(file, false));
+
+        OutputStream out = fs.writeFile(file, start);
+        start = 0;
+        con.receiveData(out);
+
         con.sendResponse(226, "File received!");
     }
 
@@ -137,7 +145,7 @@ public class FileHandler {
         }
 
         con.sendResponse(150, "File: " + fs.getPath(file));
-        con.receiveData(fs.writeFile(file, false));
+        con.receiveData(fs.writeFile(file, 0));
         con.sendResponse(226, "File received!");
     }
 
@@ -145,7 +153,7 @@ public class FileHandler {
         Object file = getFile(path);
 
         con.sendResponse(150, "Receiving a file stream for " + path);
-        con.receiveData(fs.writeFile(file, true));
+        con.receiveData(fs.writeFile(file, fs.exists(file) ? fs.getSize(file) : 0));
         con.sendResponse(226, "File received!");
     }
 
@@ -153,8 +161,22 @@ public class FileHandler {
         Object file = getFile(path);
 
         con.sendResponse(150, "Sending the file stream for " + path + " (" + fs.getSize(file) + " bytes)");
-        con.sendData(fs.readFile(file));
+
+        InputStream in = Utils.readFileSystem(fs, file, start, con.isAsciiMode());
+        start = 0;
+        con.sendData(in);
+
         con.sendResponse(226, "File sent!");
+    }
+
+    private void rest(String byteStr) {
+        int bytes = Integer.parseInt(byteStr);
+        if(bytes >= 0) {
+            start = bytes;
+            con.sendResponse(350, "Restarting at " + bytes + ". Ready to receive a RETR or STOR command");
+        } else {
+            con.sendResponse(501, "The number of bytes should be greater or equal to 0");
+        }
     }
 
     private void list(String[] args) throws IOException {

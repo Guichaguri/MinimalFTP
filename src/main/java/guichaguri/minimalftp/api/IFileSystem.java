@@ -133,21 +133,22 @@ public interface IFileSystem<F extends Object> {
     /**
      * Reads a file into an input stream
      * @param file The file object
+     * @param start The position in bytes to start reading from
      * @return The input stream of the file
      * @throws IOException When an error occurs
      */
-    InputStream readFile(F file) throws IOException;
+    InputStream readFile(F file, long start) throws IOException;
 
     /**
      * Writes a file into an output stream
      * If the file does not exist, creates the file
      *
      * @param file The file object
-     * @param append Whether the bytes should be written at the end of the file
+     * @param start The position in bytes to start writing to
      * @return The output stream of the file
      * @throws IOException When an error occurs
      */
-    OutputStream writeFile(F file, boolean append) throws IOException;
+    OutputStream writeFile(F file, long start) throws IOException;
 
     /**
      * Creates a directory

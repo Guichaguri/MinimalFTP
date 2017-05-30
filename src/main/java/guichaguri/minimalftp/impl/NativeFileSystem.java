@@ -2,13 +2,7 @@ package guichaguri.minimalftp.impl;
 
 import guichaguri.minimalftp.Utils;
 import guichaguri.minimalftp.api.IFileSystem;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 
 /**
  * Native File System
@@ -128,13 +122,47 @@ public class NativeFileSystem implements IFileSystem<File> {
     }
 
     @Override
-    public InputStream readFile(File file) throws IOException {
-        return new FileInputStream(file);
+    public InputStream readFile(File file, long start) throws IOException {
+        // Not really needed, but helps a bit in performance
+        if(start <= 0) {
+            return new FileInputStream(file);
+        }
+
+        // Use RandomAccessFile to seek a file
+        final RandomAccessFile raf = new RandomAccessFile(file, "r");
+        raf.seek(start);
+
+        // Create a stream using the RandomAccessFile
+        return new FileInputStream(raf.getFD()) {
+            @Override
+            public void close() throws IOException {
+                super.close();
+                raf.close();
+            }
+        };
     }
 
     @Override
-    public OutputStream writeFile(File file, boolean append) throws IOException {
-        return new FileOutputStream(file, append);
+    public OutputStream writeFile(File file, long start) throws IOException {
+        // Not really needed, but helps a bit in performance
+        if(start <= 0) {
+            return new FileOutputStream(file, false);
+        } else if(start == file.length()) {
+            return new FileOutputStream(file, true);
+        }
+
+        // Use RandomAccessFile to seek a file
+        final RandomAccessFile raf = new RandomAccessFile(file, "rw");
+        raf.seek(start);
+
+        // Create a stream using the RandomAccessFile
+        return new FileOutputStream(raf.getFD()) {
+            @Override
+            public void close() throws IOException {
+                super.close();
+                raf.close();
+            }
+        };
     }
 
     @Override
