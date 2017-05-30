@@ -3,6 +3,7 @@ package guichaguri.minimalftp.handler;
 import guichaguri.minimalftp.FTPConnection;
 import guichaguri.minimalftp.Utils;
 import guichaguri.minimalftp.api.IFileSystem;
+import guichaguri.minimalftp.api.ResponseException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -49,7 +50,8 @@ public class FileHandler {
         con.registerCommand("STOR", "STOR <file>", this::stor); // Store File
         con.registerCommand("STOU", "STOU [file]", this::stou); // Store Random File
         con.registerCommand("APPE", "APPE <file>", this::appe); // Append File
-        con.registerCommand("REST", "REST <bytes>", this::rest); // Restart with a position
+        con.registerCommand("REST", "REST <bytes>", this::rest); // Restart from a position
+        con.registerCommand("ABOR", "ABOR", this::abor); // Abort all data transfers
         con.registerCommand("ALLO", "ALLO <size>", this::allo); // Allocate Space
         con.registerCommand("RNFR", "RNFR <file>", this::rnfr); // Rename From
         con.registerCommand("RNTO", "RNTO <file>", this::rnto); // Rename To
@@ -119,11 +121,8 @@ public class FileHandler {
 
         con.sendResponse(150, "Receiving a file stream for " + path);
 
-        OutputStream out = fs.writeFile(file, start);
+        receiveStream(fs.writeFile(file, start));
         start = 0;
-        con.receiveData(out);
-
-        con.sendResponse(226, "File received!");
     }
 
     private void stou(String[] args) throws IOException {
@@ -145,38 +144,37 @@ public class FileHandler {
         }
 
         con.sendResponse(150, "File: " + fs.getPath(file));
-        con.receiveData(fs.writeFile(file, 0));
-        con.sendResponse(226, "File received!");
+        receiveStream(fs.writeFile(file, 0));
     }
 
     private void appe(String path) throws IOException {
         Object file = getFile(path);
 
         con.sendResponse(150, "Receiving a file stream for " + path);
-        con.receiveData(fs.writeFile(file, fs.exists(file) ? fs.getSize(file) : 0));
-        con.sendResponse(226, "File received!");
+        receiveStream(fs.writeFile(file, fs.exists(file) ? fs.getSize(file) : 0));
     }
 
     private void retr(String path) throws IOException {
         Object file = getFile(path);
 
         con.sendResponse(150, "Sending the file stream for " + path + " (" + fs.getSize(file) + " bytes)");
-
-        InputStream in = Utils.readFileSystem(fs, file, start, con.isAsciiMode());
+        sendStream(Utils.readFileSystem(fs, file, start, con.isAsciiMode()));
         start = 0;
-        con.sendData(in);
-
-        con.sendResponse(226, "File sent!");
     }
 
     private void rest(String byteStr) {
-        int bytes = Integer.parseInt(byteStr);
+        long bytes = Long.parseLong(byteStr);
         if(bytes >= 0) {
             start = bytes;
             con.sendResponse(350, "Restarting at " + bytes + ". Ready to receive a RETR or STOR command");
         } else {
             con.sendResponse(501, "The number of bytes should be greater or equal to 0");
         }
+    }
+
+    private void abor() throws IOException {
+        con.abortDataTransfers();
+        con.sendResponse(226, "All transfers were aborted successfully");
     }
 
     private void list(String[] args) throws IOException {
@@ -258,6 +256,40 @@ public class FileHandler {
         Object file = getFile(path);
 
         con.sendResponse(213, Long.toString(fs.getSize(file)));
+    }
+
+    /**
+     * Sends a stream asynchronously, sending a response after it's done
+     * @param in The stream
+     */
+    private void sendStream(InputStream in) {
+        new Thread(() -> {
+            try {
+                con.sendData(in);
+                con.sendResponse(226, "File sent!");
+            } catch(ResponseException ex) {
+                con.sendResponse(ex.getCode(), ex.getMessage());
+            } catch(Exception ex) {
+                con.sendResponse(451, ex.getMessage());
+            }
+        }).start();
+    }
+
+    /**
+     * Receives a stream asynchronously, sending a response after it's done
+     * @param out The stream
+     */
+    private void receiveStream(OutputStream out) {
+        new Thread(() -> {
+            try {
+                con.receiveData(out);
+                con.sendResponse(226, "File received!");
+            } catch(ResponseException ex) {
+                con.sendResponse(ex.getCode(), ex.getMessage());
+            } catch(Exception ex) {
+                con.sendResponse(451, ex.getMessage());
+            }
+        }).start();
     }
 
 }

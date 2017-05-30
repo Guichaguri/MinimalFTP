@@ -11,7 +11,9 @@ import guichaguri.minimalftp.handler.FileHandler;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,13 +31,13 @@ public class FTPConnection implements Closeable {
     protected final BufferedReader reader;
     protected final BufferedWriter writer;
     protected final ConnectionThread thread;
+    protected final ArrayDeque<Socket> dataConnections = new ArrayDeque<>();
 
     protected ConnectionHandler conHandler;
     protected FileHandler fileHandler;
 
     protected long bytesTransferred = 0;
     protected boolean responseSent = true;
-    protected int transferring = 0;
     protected int timeout = 0;
     protected long lastUpdate = 0;
 
@@ -162,10 +164,11 @@ public class FTPConnection implements Closeable {
      */
     public void sendData(byte[] data) throws ResponseException {
         if(con.isClosed()) return;
-        transferring++;
 
+        Socket socket = null;
         try {
-            Socket socket = conHandler.createDataSocket();
+            socket = conHandler.createDataSocket();
+            dataConnections.add(socket);
             OutputStream out = socket.getOutputStream();
 
             Utils.write(out, data, data.length, conHandler.isAsciiMode());
@@ -174,11 +177,13 @@ public class FTPConnection implements Closeable {
             out.flush();
             Utils.closeQuietly(out);
             Utils.closeQuietly(socket);
+        } catch(SocketException ex) {
+            throw new ResponseException(426, "Transfer aborted");
         } catch(IOException ex) {
             throw new ResponseException(425, "An error occurred while transferring the data");
         } finally {
             onUpdate();
-            transferring--;
+            if(socket != null) dataConnections.remove(socket);
         }
     }
 
@@ -189,10 +194,11 @@ public class FTPConnection implements Closeable {
      */
     public void sendData(InputStream in) throws ResponseException {
         if(con.isClosed()) return;
-        transferring++;
 
+        Socket socket = null;
         try {
-            Socket socket = conHandler.createDataSocket();
+            socket = conHandler.createDataSocket();
+            dataConnections.add(socket);
             OutputStream out = socket.getOutputStream();
 
             byte[] buffer = new byte[1024];
@@ -206,11 +212,13 @@ public class FTPConnection implements Closeable {
             Utils.closeQuietly(out);
             Utils.closeQuietly(in);
             Utils.closeQuietly(socket);
+        } catch(SocketException ex) {
+            throw new ResponseException(426, "Transfer aborted");
         } catch(IOException ex) {
             throw new ResponseException(425, "An error occurred while transferring the data");
         } finally {
             onUpdate();
-            transferring--;
+            if(socket != null) dataConnections.remove(socket);
         }
     }
 
@@ -221,10 +229,11 @@ public class FTPConnection implements Closeable {
      */
     public void receiveData(OutputStream out) throws ResponseException {
         if(con.isClosed()) return;
-        transferring++;
 
+        Socket socket = null;
         try {
-            Socket socket = conHandler.createDataSocket();
+            socket = conHandler.createDataSocket();
+            dataConnections.add(socket);
             InputStream in = socket.getInputStream();
 
             byte[] buffer = new byte[1024];
@@ -238,11 +247,23 @@ public class FTPConnection implements Closeable {
             Utils.closeQuietly(out);
             Utils.closeQuietly(in);
             Utils.closeQuietly(socket);
+        } catch(SocketException ex) {
+            throw new ResponseException(426, "Transfer aborted");
         } catch(IOException ex) {
             throw new ResponseException(425, "An error occurred while transferring the data");
         } finally {
             onUpdate();
-            transferring--;
+            if(socket != null) dataConnections.remove(socket);
+        }
+    }
+
+    /**
+     * Aborts all data transfers
+     */
+    public void abortDataTransfers() {
+        while(!dataConnections.isEmpty()) {
+            Socket socket = dataConnections.poll();
+            if(socket != null) Utils.closeQuietly(socket);
         }
     }
 
@@ -401,7 +422,7 @@ public class FTPConnection implements Closeable {
             line = reader.readLine();
         } catch(SocketTimeoutException ex) {
             // Check if the socket has timed out
-            if(transferring > 0 && (System.currentTimeMillis() - lastUpdate) >= timeout) {
+            if(!dataConnections.isEmpty() && (System.currentTimeMillis() - lastUpdate) >= timeout) {
                 Utils.closeQuietly(this);
             }
             return;

@@ -4,7 +4,7 @@ A lightweight, simple FTP server. Pure Java, no libraries.
 ## Specification Support
 The required minimum implementation is already done, however, there are still commands that can be implemented.
 
-* [RFC 959](https://tools.ietf.org/html/rfc959) - File Transfer Protocol (32/33)
+* [RFC 959](https://tools.ietf.org/html/rfc959) - File Transfer Protocol (33/33)
 * [RFC 697](https://tools.ietf.org/html/rfc697) - CWD Command of FTP (1/1)
 * [RFC 737](https://tools.ietf.org/html/rfc737) - FTP Extension: XSEN (0/3)
 * [RFC 743](https://tools.ietf.org/html/rfc743) - FTP extension: XRSQ/XRCP (0/4)
