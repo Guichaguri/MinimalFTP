@@ -85,7 +85,7 @@ public class ConnectionHandler {
         con.registerCommand("REIN", "REIN", this::rein, false); // Logout
         con.registerCommand("USER", "USER <username>", this::user, false); // Set Username
         con.registerCommand("PASS", "PASS <password>", this::pass, false); // Set Password
-        con.registerCommand("ACCT", "ACCT <info>", this::acct); // Account Info
+        con.registerCommand("ACCT", "ACCT <info>", this::acct, false); // Account Info
         con.registerCommand("SYST", "SYST", this::syst); // System Information
         con.registerCommand("PORT", "PORT <host-port>", this::port); // Active Mode
         con.registerCommand("PASV", "PASV", this::pasv); // Passive Mode
@@ -100,15 +100,15 @@ public class ConnectionHandler {
     }
 
     private void help(String[] cmd) {
-        if(cmd.length <= 1) {
+        if(cmd.length < 1) {
             con.sendResponse(501, "Missing parameters");
         }
 
-        String command = cmd[1].toUpperCase();
+        String command = cmd[0].toUpperCase();
         String help;
 
-        if(cmd.length > 2 && command.equals("SITE")) {
-            help = con.getSiteHelpMessage(cmd[2].toUpperCase());
+        if(cmd.length > 1 && command.equals("SITE")) {
+            help = "SITE " + con.getSiteHelpMessage(cmd[1].toUpperCase());
         } else {
             help = con.getHelpMessage(command);
         }
@@ -156,7 +156,7 @@ public class ConnectionHandler {
         IUserAuthenticator auth = con.getServer().getAuthenticator();
         if(auth.needsPassword(con, username)) {
             // Requests a password for the authentication
-            con.sendResponse(331, "Needs password");
+            con.sendResponse(331, "Needs a password");
         } else {
             // Tries to authenticate using the given username
             boolean success = authenticate(auth, null);
@@ -188,7 +188,20 @@ public class ConnectionHandler {
     }
 
     private void acct(String info) {
-        con.sendResponse(230, "Logged in!");
+        if(authenticated) {
+            con.sendResponse(230, "Logged in!");
+            return;
+        }
+
+        // Many clients don't even support this command, it's not needed in most cases
+        // A simple "username and password" combination is the most common system in the internet anyway
+        // The authenticator can also handle special formatted usernames, if really needed (for instance: "username|account")
+
+        // Although this is pretty simple to implement, I would have to store the password
+        // in a field instead of directly sending it to the authenticator. I prefer to keep
+        // things the way they are for security reasons.
+
+        con.sendResponse(530, "Account information is not supported");
     }
 
     private void syst() {
@@ -204,16 +217,6 @@ public class ConnectionHandler {
     private void quit() {
         con.sendResponse(221, "Closing connection...");
         stop = true;
-    }
-
-    private boolean authenticate(IUserAuthenticator auth, String password) {
-        try {
-            con.setFileSystem(auth.authenticate(con, username, password));
-            authenticated = true;
-            return true;
-        } catch(Exception ex) {
-            return false;
-        }
     }
 
     private void pasv() throws IOException {
@@ -266,4 +269,13 @@ public class ConnectionHandler {
         con.sendResponse(211, "Status sent!");
     }
 
+    private boolean authenticate(IUserAuthenticator auth, String password) {
+        try {
+            con.setFileSystem(auth.authenticate(con, username, password));
+            authenticated = true;
+            return true;
+        } catch(Exception ex) {
+            return false;
+        }
+    }
 }

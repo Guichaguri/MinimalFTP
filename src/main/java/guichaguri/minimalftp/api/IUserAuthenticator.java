@@ -12,6 +12,7 @@ public interface IUserAuthenticator {
 
     /**
      * Whether this authenticator requires a username
+     *
      * @param con The FTP connection
      * @return {@code true} if this authenticator requires a username
      */

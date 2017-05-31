@@ -52,9 +52,10 @@ public class FileHandler {
         con.registerCommand("APPE", "APPE <file>", this::appe); // Append File
         con.registerCommand("REST", "REST <bytes>", this::rest); // Restart from a position
         con.registerCommand("ABOR", "ABOR", this::abor); // Abort all data transfers
-        con.registerCommand("ALLO", "ALLO <size>", this::allo); // Allocate Space
+        con.registerCommand("ALLO", "ALLO <size>", this::allo); // Allocate Space (Obsolete)
         con.registerCommand("RNFR", "RNFR <file>", this::rnfr); // Rename From
         con.registerCommand("RNTO", "RNTO <file>", this::rnto); // Rename To
+        con.registerCommand("SMNT", "SMNT <file>", this::smnt); // Structure Mount (Obsolete)
 
         con.registerSiteCommand("CHMOD", "CHMOD <perm> <file>", this::site_chmod); // Change Permissions
 
@@ -96,6 +97,7 @@ public class FileHandler {
     }
 
     private void allo() {
+        // Obsolete command. Accepts the command but takes no action
         con.sendResponse(200, "There's no need to allocate space");
     }
 
@@ -129,10 +131,10 @@ public class FileHandler {
         Object file = null;
         String ext = ".tmp";
 
-        if(args.length > 1) {
-            file = getFile(args[1]);
-            int i = args[1].lastIndexOf('.');
-            if(i > 0) ext = args[1].substring(i);
+        if(args.length > 0) {
+            file = getFile(args[0]);
+            int i = args[0].lastIndexOf('.');
+            if(i > 0) ext = args[0].substring(i);
         }
 
         while(file != null && fs.exists(file)) {
@@ -180,7 +182,7 @@ public class FileHandler {
     private void list(String[] args) throws IOException {
         con.sendResponse(150, "Sending file list...");
 
-        Object dir = args.length > 1 ? getFile(args[1]) : cwd;
+        Object dir = args.length > 0 ? getFile(args[0]) : cwd;
         String data = "";
 
         for(Object file : fs.listFiles(dir)) {
@@ -194,7 +196,7 @@ public class FileHandler {
     private void nlst(String[] args) throws IOException {
         con.sendResponse(150, "Sending file list...");
 
-        Object dir = args.length > 1 ? getFile(args[1]) : cwd;
+        Object dir = args.length > 0 ? getFile(args[0]) : cwd;
         String data = "";
 
         for(Object file : fs.listFiles(dir)) {
@@ -237,12 +239,12 @@ public class FileHandler {
     }
 
     private void site_chmod(String[] cmd) throws IOException {
-        if(cmd.length <= 3) {
+        if(cmd.length <= 1) {
             con.sendResponse(501, "Missing parameters");
             return;
         }
 
-        fs.chmod(getFile(cmd[3]), Utils.fromOctal(cmd[2]));
+        fs.chmod(getFile(cmd[1]), Utils.fromOctal(cmd[0]));
         con.sendResponse(200, "The file permissions were successfully changed");
     }
 
@@ -256,6 +258,11 @@ public class FileHandler {
         Object file = getFile(path);
 
         con.sendResponse(213, Long.toString(fs.getSize(file)));
+    }
+
+    private void smnt() {
+        // Obsolete command. The server should respond with a 502 code
+        con.sendResponse(502, "SMNT is not implemented in this server");
     }
 
     /**

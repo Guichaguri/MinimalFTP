@@ -3,7 +3,7 @@ package guichaguri.minimalftp;
 import guichaguri.minimalftp.api.CommandInfo;
 import guichaguri.minimalftp.api.CommandInfo.Command;
 import guichaguri.minimalftp.api.CommandInfo.NoArgsCommand;
-import guichaguri.minimalftp.api.CommandInfo.SingleArgCommand;
+import guichaguri.minimalftp.api.CommandInfo.ArgsArrayCommand;
 import guichaguri.minimalftp.api.IFileSystem;
 import guichaguri.minimalftp.api.ResponseException;
 import guichaguri.minimalftp.handler.ConnectionHandler;
@@ -275,7 +275,7 @@ public class FTPConnection implements Closeable {
         addSiteCommand(label, help, cmd);
     }
 
-    public void registerSiteCommand(String label, String help, SingleArgCommand cmd) {
+    public void registerSiteCommand(String label, String help, ArgsArrayCommand cmd) {
         addSiteCommand(label, help, cmd);
     }
 
@@ -287,7 +287,7 @@ public class FTPConnection implements Closeable {
         addCommand(label, help, cmd, true);
     }
 
-    public void registerCommand(String label, String help, SingleArgCommand cmd) {
+    public void registerCommand(String label, String help, ArgsArrayCommand cmd) {
         addCommand(label, help, cmd, true);
     }
 
@@ -299,7 +299,7 @@ public class FTPConnection implements Closeable {
         addCommand(label, help, cmd, needsAuth);
     }
 
-    public void registerCommand(String label, String help, SingleArgCommand cmd, boolean needsAuth) {
+    public void registerCommand(String label, String help, ArgsArrayCommand cmd, boolean needsAuth) {
         addCommand(label, help, cmd, needsAuth);
     }
 
@@ -352,38 +352,39 @@ public class FTPConnection implements Closeable {
      * Processes commands
      * @param cmd The command and its arguments
      */
-    protected void process(String[] cmd) {
-        CommandInfo info = commands.get(cmd[0]);
+    protected void process(String cmd) {
+        int firstSpace = cmd.indexOf(' ');
+        if(firstSpace < 0) firstSpace = cmd.length();
+
+        CommandInfo info = commands.get(cmd.substring(0, firstSpace).toUpperCase());
 
         if(info == null) {
             sendResponse(502, "Unknown command");
             return;
         }
 
-        processCommand(info, cmd);
+        processCommand(info, firstSpace != cmd.length() ? cmd.substring(firstSpace + 1) : "");
     }
 
     /**
      * SITE command
      * @param cmd The command and its arguments
      */
-    protected void site(String[] cmd) {
-        if(cmd.length <= 1) {
-            sendResponse(500, "Missing the command name");
-            return;
-        }
+    protected void site(String cmd) {
+        int firstSpace = cmd.indexOf(' ');
+        if(firstSpace < 0) firstSpace = cmd.length();
 
-        CommandInfo info = siteCommands.get(cmd[1]);
+        CommandInfo info = siteCommands.get(cmd.substring(0, firstSpace).toUpperCase());
 
         if(info == null) {
             sendResponse(504, "Unknown site command");
             return;
         }
 
-        processCommand(info, cmd);
+        processCommand(info, firstSpace != cmd.length() ? cmd.substring(firstSpace + 1) : "");
     }
 
-    protected void processCommand(CommandInfo info, String[] cmd) {
+    protected void processCommand(CommandInfo info, String args) {
         if(info.needsAuth && !conHandler.isAuthenticated()) {
             sendResponse(530, "Needs authentication");
             return;
@@ -392,7 +393,7 @@ public class FTPConnection implements Closeable {
         responseSent = false;
 
         try {
-            info.command.run(cmd);
+            info.command.run(info, args);
         } catch(ResponseException ex) {
             sendResponse(ex.getCode(), ex.getMessage());
         } catch(FileNotFoundException ex) {
@@ -437,9 +438,7 @@ public class FTPConnection implements Closeable {
 
         if(line.isEmpty()) return;
 
-        String[] cmd = line.split("\\s+");
-        cmd[0] = cmd[0].toUpperCase();
-        process(cmd);
+        process(line);
     }
 
     /**

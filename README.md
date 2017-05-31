@@ -28,19 +28,19 @@ The required minimum implementation is already done, however, there are still co
 <dependency>
   <groupId>guichaguri.minimalftp</groupId>
   <artifactId>minimalftp</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <type>pom</type>
 </dependency>
 ```
 
 #### Gradle
 ```groovy
-compile 'guichaguri.minimalftp:minimalftp:1.0.0'
+compile 'guichaguri.minimalftp:minimalftp:1.0.1'
 ```
 
 #### Ivy
 ```xml
-<dependency org='guichaguri.minimalftp' name='minimalftp' rev='1.0.0'>
+<dependency org='guichaguri.minimalftp' name='minimalftp' rev='1.0.1'>
   <artifact name='minimalftp' ext='pom' />
 </dependency>
 ```

@@ -25,11 +25,16 @@ public class CommandInfo {
 
         /**
          * Runs a command that accepts all arguments
-         * @param args An array with the command label and the arguments
+         * @param argument The argument
          * @throws IOException When an error occurs
          */
-        void run(String[] args) throws IOException;
+        void run(String argument) throws IOException;
 
+        default void run(CommandInfo info, String argument) throws IOException {
+            if(argument.isEmpty()) throw new ResponseException(501, "Missing parameters");
+
+            run(argument);
+        }
     }
 
     /**
@@ -44,29 +49,39 @@ public class CommandInfo {
          */
         void run() throws IOException;
 
-        default void run(String[] args) throws IOException {
+        @Override
+        default void run(String argument) throws IOException {
+            run();
+        }
+
+        @Override
+        default void run(CommandInfo info, String argument) throws IOException {
             run();
         }
 
     }
 
     /**
-     * Represents a command with only one argument
+     * Represents a command with an array of arguments
      */
     @FunctionalInterface
-    public interface SingleArgCommand extends Command {
+    public interface ArgsArrayCommand extends Command {
 
         /**
          * Runs a command that accepts only a single argument
-         * @param argument The argument
+         * @param argument An array of arguments
          * @throws IOException When an error occurs
          */
-        void run(String argument) throws IOException;
+        void run(String[] argument) throws IOException;
 
-        default void run(String[] args) throws IOException {
-            if(args.length < 2) throw new ResponseException(501, "Missing parameters");
+        @Override
+        default void run(String argument) throws IOException {
+            run(argument.split("\\s+"));
+        }
 
-            run(args[1]);
+        @Override
+        default void run(CommandInfo info, String argument) throws IOException {
+            run(argument.split("\\s+"));
         }
 
     }
