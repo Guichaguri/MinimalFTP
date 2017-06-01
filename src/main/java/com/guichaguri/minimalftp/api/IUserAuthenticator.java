@@ -1,6 +1,6 @@
-package guichaguri.minimalftp.api;
+package com.guichaguri.minimalftp.api;
 
-import guichaguri.minimalftp.FTPConnection;
+import com.guichaguri.minimalftp.FTPConnection;
 
 /**
  * Represents an user authenticator.

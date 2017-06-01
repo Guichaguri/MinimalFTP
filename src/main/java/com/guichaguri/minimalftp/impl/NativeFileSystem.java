@@ -1,7 +1,7 @@
-package guichaguri.minimalftp.impl;
+package com.guichaguri.minimalftp.impl;
 
-import guichaguri.minimalftp.Utils;
-import guichaguri.minimalftp.api.IFileSystem;
+import com.guichaguri.minimalftp.api.IFileSystem;
+import com.guichaguri.minimalftp.Utils;
 import java.io.*;
 
 /**

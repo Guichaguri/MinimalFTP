@@ -1,7 +1,8 @@
-package guichaguri.minimalftp;
+package com.guichaguri.minimalftp;
 
-import guichaguri.minimalftp.api.IFTPListener;
-import guichaguri.minimalftp.api.IUserAuthenticator;
+import com.guichaguri.minimalftp.api.IFTPListener;
+import com.guichaguri.minimalftp.api.IUserAuthenticator;
+import com.guichaguri.minimalftp.impl.NoOpAuthenticator;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -71,7 +72,7 @@ public class FTPServer implements Closeable {
      * provide a different file system depending on the user.
      *
      * @param auth The authenticator
-     * @see guichaguri.minimalftp.impl.NoOpAuthenticator
+     * @see NoOpAuthenticator
      */
     public void setAuthenticator(IUserAuthenticator auth) {
         if(auth == null) throw new NullPointerException("The Authenticator is null");

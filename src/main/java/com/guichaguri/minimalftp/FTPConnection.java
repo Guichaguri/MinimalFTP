@@ -1,13 +1,14 @@
-package guichaguri.minimalftp;
+package com.guichaguri.minimalftp;
 
-import guichaguri.minimalftp.api.CommandInfo;
-import guichaguri.minimalftp.api.CommandInfo.Command;
-import guichaguri.minimalftp.api.CommandInfo.NoArgsCommand;
-import guichaguri.minimalftp.api.CommandInfo.ArgsArrayCommand;
-import guichaguri.minimalftp.api.IFileSystem;
-import guichaguri.minimalftp.api.ResponseException;
-import guichaguri.minimalftp.handler.ConnectionHandler;
-import guichaguri.minimalftp.handler.FileHandler;
+import com.guichaguri.minimalftp.api.IFileSystem;
+import com.guichaguri.minimalftp.api.IUserAuthenticator;
+import com.guichaguri.minimalftp.handler.FileHandler;
+import com.guichaguri.minimalftp.api.CommandInfo;
+import com.guichaguri.minimalftp.api.CommandInfo.Command;
+import com.guichaguri.minimalftp.api.CommandInfo.NoArgsCommand;
+import com.guichaguri.minimalftp.api.CommandInfo.ArgsArrayCommand;
+import com.guichaguri.minimalftp.api.ResponseException;
+import com.guichaguri.minimalftp.handler.ConnectionHandler;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -132,7 +133,7 @@ public class FTPConnection implements Closeable {
     /**
      * Sets the new file system for this connection.
      * Calling this method can result into desynchronization for the connection.
-     * Please, if you want to change the file system, use a {@link guichaguri.minimalftp.api.IUserAuthenticator}
+     * Please, if you want to change the file system, use a {@link IUserAuthenticator}
      *
      * @param fs The new file system
      */

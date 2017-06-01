@@ -1,8 +1,8 @@
-package guichaguri.minimalftp;
+package com.guichaguri.minimalftp;
 
-import guichaguri.minimalftp.api.IFTPListener;
-import guichaguri.minimalftp.custom.CommandHandler;
-import guichaguri.minimalftp.custom.UserbaseAuthenticator;
+import com.guichaguri.minimalftp.api.IFTPListener;
+import com.guichaguri.minimalftp.custom.CommandHandler;
+import com.guichaguri.minimalftp.custom.UserbaseAuthenticator;
 import java.io.IOException;
 import java.net.InetAddress;
 

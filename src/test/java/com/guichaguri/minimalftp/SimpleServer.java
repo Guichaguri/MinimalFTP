@@ -1,7 +1,7 @@
-package guichaguri.minimalftp;
+package com.guichaguri.minimalftp;
 
-import guichaguri.minimalftp.impl.NativeFileSystem;
-import guichaguri.minimalftp.impl.NoOpAuthenticator;
+import com.guichaguri.minimalftp.impl.NativeFileSystem;
+import com.guichaguri.minimalftp.impl.NoOpAuthenticator;
 import java.io.File;
 import java.io.IOException;
 

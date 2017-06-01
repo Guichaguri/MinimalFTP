@@ -1,9 +1,9 @@
-package guichaguri.minimalftp.custom;
+package com.guichaguri.minimalftp.custom;
 
-import guichaguri.minimalftp.FTPConnection;
-import guichaguri.minimalftp.api.IFileSystem;
-import guichaguri.minimalftp.api.IUserAuthenticator;
-import guichaguri.minimalftp.impl.NativeFileSystem;
+import com.guichaguri.minimalftp.FTPConnection;
+import com.guichaguri.minimalftp.api.IFileSystem;
+import com.guichaguri.minimalftp.api.IUserAuthenticator;
+import com.guichaguri.minimalftp.impl.NativeFileSystem;
 import java.io.File;
 import java.security.MessageDigest;
 import java.util.Arrays;

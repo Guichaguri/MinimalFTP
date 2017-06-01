@@ -1,6 +1,6 @@
-package guichaguri.minimalftp;
+package com.guichaguri.minimalftp;
 
-import guichaguri.minimalftp.api.IFileSystem;
+import com.guichaguri.minimalftp.api.IFileSystem;
 import java.io.BufferedInputStream;
 import java.io.Closeable;
 import java.io.IOException;

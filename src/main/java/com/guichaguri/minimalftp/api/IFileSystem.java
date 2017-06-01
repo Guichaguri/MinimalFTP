@@ -1,4 +1,4 @@
-package guichaguri.minimalftp.api;
+package com.guichaguri.minimalftp.api;
 
 import java.io.IOException;
 import java.io.InputStream;

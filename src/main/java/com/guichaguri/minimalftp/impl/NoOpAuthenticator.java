@@ -1,8 +1,8 @@
-package guichaguri.minimalftp.impl;
+package com.guichaguri.minimalftp.impl;
 
-import guichaguri.minimalftp.FTPConnection;
-import guichaguri.minimalftp.api.IFileSystem;
-import guichaguri.minimalftp.api.IUserAuthenticator;
+import com.guichaguri.minimalftp.FTPConnection;
+import com.guichaguri.minimalftp.api.IFileSystem;
+import com.guichaguri.minimalftp.api.IUserAuthenticator;
 
 /**
  * No Operation Authenticator

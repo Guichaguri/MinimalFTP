@@ -1,13 +1,14 @@
-package guichaguri.minimalftp.custom;
+package com.guichaguri.minimalftp.custom;
 
-import guichaguri.minimalftp.FTPConnection;
+import com.guichaguri.minimalftp.CustomServer;
+import com.guichaguri.minimalftp.FTPConnection;
 import java.io.IOException;
 
 /**
  * A class that handle a custom command.
  * You can easily add more commands with more methods
  *
- * The commands are registered in {@link guichaguri.minimalftp.CustomServer#onConnected(FTPConnection)}
+ * The commands are registered in {@link CustomServer#onConnected(FTPConnection)}
  * @author Guilherme Chaguri
  */
 public class CommandHandler {
