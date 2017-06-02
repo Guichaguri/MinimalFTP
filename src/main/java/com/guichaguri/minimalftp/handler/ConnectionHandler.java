@@ -1,12 +1,13 @@
 package com.guichaguri.minimalftp.handler;
 
 import com.guichaguri.minimalftp.FTPConnection;
-import com.guichaguri.minimalftp.api.IUserAuthenticator;
 import com.guichaguri.minimalftp.Utils;
+import com.guichaguri.minimalftp.api.IUserAuthenticator;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import javax.net.ssl.SSLParameters;
 
 /**
  * Handles special connection-based commands
@@ -93,6 +94,8 @@ public class ConnectionHandler {
         con.registerCommand("STRU", "STRU <type>", this::stru); // Structure Type
         con.registerCommand("MODE", "MODE <mode>", this::mode); // Change Mode
         con.registerCommand("STAT", "STAT", this::stat); // Statistics
+
+        con.registerCommand("AUTH", "AUTH <mechanism>", this::auth, false); // Security Mechanism (RFC 2228)
     }
 
     private void noop() {
@@ -267,6 +270,34 @@ public class ConnectionHandler {
         con.sendData(data.getBytes("UTF-8"));
 
         con.sendResponse(211, "Status sent!");
+    }
+
+    private void auth(String mechanism) throws IOException {
+
+        mechanism = mechanism.toUpperCase();
+        String protocol;
+
+        if(mechanism.equals("TLS") || mechanism.equals("TLS-C")) {
+            // Implicit Security
+            protocol = "TLS";
+        } else if(mechanism.equals("SSL") || mechanism.equals("TLS-P")) {
+            // Explicit Security
+            protocol = "SSL";
+        } else {
+            con.sendResponse(504, "Unknown mechanism");
+            return;
+        }
+
+        SSLParameters ssl = con.getServer().getSSLParameters();
+
+        if(ssl == null) {
+            con.sendResponse(431, "SSL not available");
+        } else if(Utils.indexOf(ssl.getProtocols(), protocol) < 0) {//TODO check
+            con.sendResponse(534, "Unsupported protocol");
+        } else {
+            con.enableSSL(ssl);
+            con.sendResponse(234, "SSL Enabled");
+        }
     }
 
     private boolean authenticate(IUserAuthenticator auth, String password) {

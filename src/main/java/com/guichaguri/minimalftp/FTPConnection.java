@@ -17,6 +17,9 @@ import java.net.SocketTimeoutException;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 
 /**
  * Represents a FTP user connected to the server
@@ -28,9 +31,9 @@ public class FTPConnection implements Closeable {
     protected final Map<String, CommandInfo> siteCommands = new HashMap<>();
 
     protected final FTPServer server;
-    protected final Socket con;
-    protected final BufferedReader reader;
-    protected final BufferedWriter writer;
+    protected Socket con;
+    protected BufferedReader reader;
+    protected BufferedWriter writer;
     protected final ConnectionThread thread;
     protected final ArrayDeque<Socket> dataConnections = new ArrayDeque<>();
 
@@ -139,6 +142,16 @@ public class FTPConnection implements Closeable {
      */
     public void setFileSystem(IFileSystem fs) {
         fileHandler.setFileSystem(fs);
+    }
+
+    public void enableSSL(SSLParameters ssl) throws IOException {
+        SSLSocketFactory factory = (SSLSocketFactory)SSLSocketFactory.getDefault();
+        con = factory.createSocket(con, con.getInetAddress().getHostAddress(), con.getPort(), true);
+        ((SSLSocket)con).setUseClientMode(false);
+        if(ssl != null) ((SSLSocket)con).setSSLParameters(ssl);
+
+        reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+        writer = new BufferedWriter(new OutputStreamWriter(con.getOutputStream()));
     }
 
     /**

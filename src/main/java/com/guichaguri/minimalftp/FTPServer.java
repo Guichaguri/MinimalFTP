@@ -11,6 +11,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import javax.net.ssl.SSLParameters;
 
 /**
  * FTP Server
@@ -23,6 +24,7 @@ public class FTPServer implements Closeable {
 
     protected IUserAuthenticator auth = null;
     protected int idleTimeout = 5 * 60 * 1000; // 5 minutes
+    protected SSLParameters ssl = null;
 
     protected ServerSocket socket = null;
     protected ServerThread serverThread = null;
@@ -77,6 +79,14 @@ public class FTPServer implements Closeable {
     public void setAuthenticator(IUserAuthenticator auth) {
         if(auth == null) throw new NullPointerException("The Authenticator is null");
         this.auth = auth;
+    }
+
+    public SSLParameters getSSLParameters() {
+        return ssl;
+    }
+
+    public void setSSLParameters(SSLParameters ssl) {
+        this.ssl = ssl;
     }
 
     /**
