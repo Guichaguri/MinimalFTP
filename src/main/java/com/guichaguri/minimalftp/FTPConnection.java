@@ -1,14 +1,14 @@
 package com.guichaguri.minimalftp;
 
-import com.guichaguri.minimalftp.api.IFileSystem;
-import com.guichaguri.minimalftp.api.IUserAuthenticator;
-import com.guichaguri.minimalftp.handler.FileHandler;
 import com.guichaguri.minimalftp.api.CommandInfo;
+import com.guichaguri.minimalftp.api.CommandInfo.ArgsArrayCommand;
 import com.guichaguri.minimalftp.api.CommandInfo.Command;
 import com.guichaguri.minimalftp.api.CommandInfo.NoArgsCommand;
-import com.guichaguri.minimalftp.api.CommandInfo.ArgsArrayCommand;
+import com.guichaguri.minimalftp.api.IFileSystem;
+import com.guichaguri.minimalftp.api.IUserAuthenticator;
 import com.guichaguri.minimalftp.api.ResponseException;
 import com.guichaguri.minimalftp.handler.ConnectionHandler;
+import com.guichaguri.minimalftp.handler.FileHandler;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -17,7 +17,7 @@ import java.net.SocketTimeoutException;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
-import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
@@ -144,11 +144,14 @@ public class FTPConnection implements Closeable {
         fileHandler.setFileSystem(fs);
     }
 
-    public void enableSSL(SSLParameters ssl) throws IOException {
-        SSLSocketFactory factory = (SSLSocketFactory)SSLSocketFactory.getDefault();
+    public boolean isSSLEnabled() {
+        return con instanceof SSLSocket;
+    }
+
+    public void enableSSL(SSLContext context) throws IOException {
+        SSLSocketFactory factory = context.getSocketFactory();
         con = factory.createSocket(con, con.getInetAddress().getHostAddress(), con.getPort(), true);
         ((SSLSocket)con).setUseClientMode(false);
-        if(ssl != null) ((SSLSocket)con).setSSLParameters(ssl);
 
         reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
         writer = new BufferedWriter(new OutputStreamWriter(con.getOutputStream()));

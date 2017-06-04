@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLContext;
 
 /**
  * Handles special connection-based commands
@@ -273,30 +273,25 @@ public class ConnectionHandler {
     }
 
     private void auth(String mechanism) throws IOException {
-
         mechanism = mechanism.toUpperCase();
-        String protocol;
 
-        if(mechanism.equals("TLS") || mechanism.equals("TLS-C")) {
-            // Implicit Security
-            protocol = "TLS";
-        } else if(mechanism.equals("SSL") || mechanism.equals("TLS-P")) {
-            // Explicit Security
-            protocol = "SSL";
+        if(mechanism.equals("TLS") || mechanism.equals("TLS-C") ||
+            mechanism.equals("SSL") || mechanism.equals("TLS-P")) {
+            // No need to distinguish between TLS and SSL, as the protocol self-negotiate its level
+
+            SSLContext ssl = con.getServer().getSSLContext();
+
+            if(ssl == null) {
+                con.sendResponse(431, "TLS/SSL is not available");
+            } else if(con.isSSLEnabled()) {
+                con.sendResponse(503, "TLS/SSL is already enabled");
+            } else {
+                con.sendResponse(234, "Enabling TLS/SSL...");
+                con.enableSSL(ssl);
+            }
+
         } else {
-            con.sendResponse(504, "Unknown mechanism");
-            return;
-        }
-
-        SSLParameters ssl = con.getServer().getSSLParameters();
-
-        if(ssl == null) {
-            con.sendResponse(431, "SSL not available");
-        } else if(Utils.indexOf(ssl.getProtocols(), protocol) < 0) {//TODO check
-            con.sendResponse(534, "Unsupported protocol");
-        } else {
-            con.enableSSL(ssl);
-            con.sendResponse(234, "SSL Enabled");
+            con.sendResponse(502, "Unsupported mechanism");
         }
     }
 

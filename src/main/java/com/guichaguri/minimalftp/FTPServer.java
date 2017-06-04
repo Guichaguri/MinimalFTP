@@ -11,7 +11,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLContext;
 
 /**
  * FTP Server
@@ -24,7 +24,8 @@ public class FTPServer implements Closeable {
 
     protected IUserAuthenticator auth = null;
     protected int idleTimeout = 5 * 60 * 1000; // 5 minutes
-    protected SSLParameters ssl = null;
+    protected SSLContext ssl = null;
+    protected boolean explicitSecurity = true;
 
     protected ServerSocket socket = null;
     protected ServerThread serverThread = null;
@@ -81,12 +82,35 @@ public class FTPServer implements Closeable {
         this.auth = auth;
     }
 
-    public SSLParameters getSSLParameters() {
+    /**
+     * Gets the SSL context
+     * @return The context
+     */
+    public SSLContext getSSLContext() {
         return ssl;
     }
 
-    public void setSSLParameters(SSLParameters ssl) {
+    /**
+     * Sets the SSL context for secure connections.
+     * This is required for supporting TLS/SLL
+     *
+     * @param ssl The context
+     */
+    public void setSSLContext(SSLContext ssl) {
         this.ssl = ssl;
+    }
+
+    /**
+     * Sets whether the security will be explicit or implicit
+     * A server in explicit mode will support both secure and insecure connections
+     * A server in implicit mode will only support secure connections
+     *
+     * In order to support SSL, a context must be given with {@link #setSSLContext(SSLContext)}
+     *
+     * @param explicit {@code true} to support all connections, {@code false} otherwise
+     */
+    public void setExplicitSSL(boolean explicit) {
+        this.explicitSecurity = explicit;
     }
 
     /**
@@ -141,7 +165,7 @@ public class FTPServer implements Closeable {
         if(auth == null) throw new NullPointerException("The Authenticator is null");
         if(socket != null) throw new IOException("Server already started");
 
-        socket = new ServerSocket(port, 50, address);
+        socket = createSocket(address, port);
 
         serverThread = new ServerThread();
         serverThread.setDaemon(true);
@@ -173,11 +197,21 @@ public class FTPServer implements Closeable {
         if(auth == null) throw new NullPointerException("The Authenticator is null");
         if(socket != null) throw new IOException("Server already started");
 
-        socket = new ServerSocket(port, 50, address);
+        socket = createSocket(address, port);
 
         while(!socket.isClosed()) {
             update();
         }
+    }
+
+    protected ServerSocket createSocket(InetAddress address, int port) throws IOException {
+        if(!explicitSecurity) {
+            if(ssl == null) {
+                throw new NullPointerException("The SSL context is null. Starting an implicit server is not possible");
+            }
+            return ssl.getServerSocketFactory().createServerSocket(port, 50, address);
+        }
+        return new ServerSocket(port, 50, address);
     }
 
     /**

@@ -134,13 +134,6 @@ public class Utils {
         return Integer.parseInt(perm, 8);
     }
 
-    public static int indexOf(Object[] array, Object needle) {
-        for(int i = 0; i < array.length; i++) {
-            if(array[i].equals(needle)) return i;
-        }
-        return -1;
-    }
-
     public static void closeQuietly(Closeable closeable) {
         try {
             closeable.close();
