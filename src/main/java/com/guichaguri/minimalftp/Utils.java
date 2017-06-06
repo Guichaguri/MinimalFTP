@@ -6,9 +6,12 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import javax.net.ssl.SSLContext;
 
 /**
  * @author Guilherme Chaguri
@@ -132,6 +135,14 @@ public class Utils {
 
     public static int fromOctal(String perm) {
         return Integer.parseInt(perm, 8);
+    }
+
+    public static ServerSocket createServer(int port, int backlog, InetAddress address, SSLContext context, boolean ssl) throws IOException {
+        if(ssl) {
+            if(context == null) throw new NullPointerException("The SSL context is null");
+            return context.getServerSocketFactory().createServerSocket(port, backlog, address);
+        }
+        return new ServerSocket(port, backlog, address);
     }
 
     public static void closeQuietly(Closeable closeable) {

@@ -1,6 +1,7 @@
 package com.guichaguri.minimalftp.handler;
 
 import com.guichaguri.minimalftp.FTPConnection;
+import com.guichaguri.minimalftp.FTPServer;
 import com.guichaguri.minimalftp.Utils;
 import com.guichaguri.minimalftp.api.IUserAuthenticator;
 import java.io.IOException;
@@ -8,6 +9,8 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 
 /**
  * Handles special connection-based commands
@@ -26,7 +29,7 @@ public class ConnectionHandler {
     private int activePort = 0;
 
     private boolean ascii = true;
-
+    private boolean secureData = false;
     private boolean stop = false;
 
     public ConnectionHandler(FTPConnection connection) {
@@ -52,6 +55,11 @@ public class ConnectionHandler {
     public Socket createDataSocket() throws IOException {
         if(passive && passiveServer != null) {
             return passiveServer.accept();
+        } else if(secureData) {
+            SSLSocketFactory factory = con.getServer().getSSLContext().getSocketFactory();
+            SSLSocket socket = (SSLSocket)factory.createSocket(activeHost, activePort);
+            socket.setUseClientMode(false);
+            return socket;
         } else {
             return new Socket(activeHost, activePort);
         }
@@ -96,6 +104,8 @@ public class ConnectionHandler {
         con.registerCommand("STAT", "STAT", this::stat); // Statistics
 
         con.registerCommand("AUTH", "AUTH <mechanism>", this::auth, false); // Security Mechanism (RFC 2228)
+        con.registerCommand("PBSZ", "PBSZ <size>", this::pbsz, false); // Protection Buffer Size (RFC 2228)
+        con.registerCommand("PROT", "PROT <level>", this::prot, false); // Data Channel Protection Level (RFC 2228)
     }
 
     private void noop() {
@@ -223,7 +233,8 @@ public class ConnectionHandler {
     }
 
     private void pasv() throws IOException {
-        passiveServer = new ServerSocket(0, 5, con.getServer().getAddress());
+        FTPServer server = con.getServer();
+        passiveServer = Utils.createServer(0, 5, server.getAddress(), server.getSSLContext(), secureData);
         passive = true;
 
         String host = passiveServer.getInetAddress().getHostAddress();
@@ -292,6 +303,34 @@ public class ConnectionHandler {
 
         } else {
             con.sendResponse(502, "Unsupported mechanism");
+        }
+    }
+
+    private void pbsz(String size) {
+        if(con.isSSLEnabled()) {
+            // For SSL, the buffer size should always be 0
+            // Any other size should be accepted
+            con.sendResponse(200, "The protection buffer size was set to 0");
+        } else {
+            con.sendResponse(503, "You can't set the protection buffer size in an insecure connection");
+        }
+    }
+
+    private void prot(String level) {
+        level = level.toUpperCase();
+
+        if(!con.isSSLEnabled()) {
+            con.sendResponse(503, "You can't update the protection level in an insecure connection");
+        } else if(level.equals("C")) {
+            secureData = false;
+            con.sendResponse(200, "Protection level set to clear");
+        } else if(level.equals("P")) {
+            secureData = true;
+            con.sendResponse(200, "Protection level set to private");
+        } else if(level.equals("S") || level.equals("E")) {
+            con.sendResponse(521, "Unsupported protection level");
+        } else {
+            con.sendResponse(502, "Unknown protection level");
         }
     }
 
