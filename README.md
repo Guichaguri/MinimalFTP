@@ -11,7 +11,7 @@ The required minimum implementation is already done, however, there are still co
 * [RFC 775](https://tools.ietf.org/html/rfc775) - Directory oriented FTP commands (5/5)
 * [RFC 1123](https://tools.ietf.org/html/rfc1123#page-29) - Requirements for Internet Hosts
 * [RFC 1639](https://tools.ietf.org/html/rfc1639) - FTP Operation Over Big Address Records (0/2)
-* [RFC 2228](https://tools.ietf.org/html/rfc2228) - FTP Security Extensions (0/8)
+* [RFC 2228](https://tools.ietf.org/html/rfc2228) - FTP Security Extensions (3/8)
 * [RFC 2389](https://tools.ietf.org/html/rfc2389) - Feature negotiation mechanism for the File Transfer Protocol (0/2)
 * [RFC 2428](https://tools.ietf.org/html/rfc2428) - FTP Extensions for IPv6 and NATs (0/2)
 * [RFC 2640](https://tools.ietf.org/html/rfc2640) - Internationalization of the File Transfer Protocol (0/1)
@@ -26,27 +26,27 @@ The required minimum implementation is already done, however, there are still co
 #### Maven
 ```xml
 <dependency>
-  <groupId>guichaguri.minimalftp</groupId>
+  <groupId>com.guichaguri</groupId>
   <artifactId>minimalftp</artifactId>
-  <version>1.0.1</version>
+  <version>1.0.2</version>
   <type>pom</type>
 </dependency>
 ```
 
 #### Gradle
 ```groovy
-compile 'guichaguri.minimalftp:minimalftp:1.0.1'
+compile 'com.guichaguri:minimalftp:1.0.2'
 ```
 
 #### Ivy
 ```xml
-<dependency org='guichaguri.minimalftp' name='minimalftp' rev='1.0.1'>
+<dependency org='com.guichaguri' name='minimalftp' rev='1.0.2'>
   <artifact name='minimalftp' ext='pom' />
 </dependency>
 ```
 
 ### API
-Check out more examples [here](https://github.com/Guichaguri/MinimalFTP/tree/master/src/test/java/guichaguri/minimalftp) :)
+Check out more examples [here](https://github.com/Guichaguri/MinimalFTP/tree/master/src/test/java/com/guichaguri/minimalftp) :)
 
 ```java
 // Uses the current working directory as the root
