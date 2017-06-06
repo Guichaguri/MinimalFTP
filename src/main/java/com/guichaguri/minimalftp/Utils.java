@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -46,6 +47,10 @@ public class Utils {
         return mdtmFormat.format(new Date(time));
     }
 
+    public static long fromMdtmTimestamp(String time) throws ParseException {
+        return mdtmFormat.parse(time).getTime();
+    }
+
     public static <F> String format(IFileSystem<F> fs, F file) {
         // Intended Format
         // -rw-rw-rw-   1 owner   group    7045120 Aug 08  5:24 video.mp4
@@ -81,6 +86,30 @@ public class Utils {
         perm += hasPermission(perms, CAT_PUBLIC + TYPE_EXECUTE) ? 'x' : '-';
 
         return perm;
+    }
+
+    public static <F> String getFacts(IFileSystem<F> fs, F file) {
+        int perms = fs.getPermissions(file);
+        boolean dir = fs.isDirectory(file);
+        String perm = "";
+        String type = dir ? "dir" : "file";
+
+        if(hasPermission(perms, CAT_OWNER + TYPE_READ)) {
+            perm += dir ? "el" : "r";
+        }
+        if(hasPermission(perms, CAT_OWNER + TYPE_WRITE)) {
+            perm += "f";
+            perm += dir ? "pcm" : "adw";
+        }
+
+        String facts = "";
+        facts += "Modify=" + Utils.toMdtmTimestamp(fs.getLastModified(file)) + ";";
+        facts += "Perm=" + perm + ";";
+        facts += "Size=" + fs.getSize(file) + ";";
+        facts += "Type=" + type + ";";
+        facts += " " + fs.getPath(file) + "\r\n";
+
+        return facts;
     }
 
     public static void write(OutputStream out, byte[] bytes, int len, boolean ascii) throws IOException {

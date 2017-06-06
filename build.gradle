@@ -1,5 +1,5 @@
-group 'guichaguri.minimalftp'
-version '1.0.2'
+group 'com.guichaguri'
+version '1.0.3'
 
 buildscript {
     repositories {

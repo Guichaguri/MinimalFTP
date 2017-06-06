@@ -187,6 +187,11 @@ public class NativeFileSystem implements IFileSystem<File> {
         file.setExecutable(Utils.hasPermission(perms, Utils.CAT_OWNER + Utils.TYPE_EXECUTE), true);
     }
 
+    @Override
+    public void touch(File file, long time) throws IOException {
+        if(!file.setLastModified(time)) throw new IOException("Couldn't touch the file");
+    }
+
     private boolean isInside(File dir, File file) {
         if(file.equals(dir)) return true;
 

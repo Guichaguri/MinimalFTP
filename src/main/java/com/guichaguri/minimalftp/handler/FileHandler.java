@@ -7,6 +7,7 @@ import com.guichaguri.minimalftp.api.ResponseException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.ParseException;
 import java.util.UUID;
 
 /**
@@ -61,6 +62,8 @@ public class FileHandler {
 
         con.registerCommand("MDTM", "MDTM <file>", this::mdtm); // Modification Time (RFC 3659)
         con.registerCommand("SIZE", "SIZE <file>", this::size); // File Size (RFC 3659)
+        con.registerCommand("MLST", "MLST <file>", this::mlst); // File Information (RFC 3659)
+        con.registerCommand("MLSD", "MLSD <file>", this::mlsd); // List Files Information (RFC 3659)
 
         con.registerCommand("XCWD", "XCWD <file>", this::cwd); // Change Working Directory (RFC 775)
         con.registerCommand("XCUP", "XCUP", this::cdup); // Change to Parent Directory (RFC 775)
@@ -68,11 +71,18 @@ public class FileHandler {
         con.registerCommand("XMKD", "XMKD <file>", this::mkd); // Create Directory (RFC 775)
         con.registerCommand("XRMD", "XRMD <file>", this::rmd); // Delete Directory (RFC 775)
 
+        con.registerCommand("MFMT", "MFMT <time> <file>", this::mfmt); // Change Modified Time (draft-somers-ftp-mfxx-04)
+
         con.registerFeature("base"); // Base Commands (RFC 5797)
         con.registerFeature("hist"); // Obsolete Commands (RFC 5797)
         con.registerFeature("REST STREAM"); // Restart in stream mode (RFC 3659)
         con.registerFeature("MDTM"); // Modification Time (RFC 3659)
         con.registerFeature("SIZE"); // File Size (RFC 3659)
+        con.registerFeature("MLST"); // File Information (RFC 3659)
+        con.registerFeature("MLSD"); // List Files Information (RFC 3659)
+        con.registerFeature("TVFS"); // TVFS Mechanism (RFC 3659)
+        con.registerFeature("MFMT"); // Change Modified Time (draft-somers-ftp-mfxx-04)
+
     }
 
     private Object getFile(String path) throws IOException {
@@ -244,6 +254,11 @@ public class FileHandler {
         con.sendResponse(257, '"' + path + '"' + " Directory Created");
     }
 
+    private void smnt() {
+        // Obsolete command. The server should respond with a 502 code
+        con.sendResponse(502, "SMNT is not implemented in this server");
+    }
+
     private void site_chmod(String[] cmd) throws IOException {
         if(cmd.length <= 1) {
             con.sendResponse(501, "Missing parameters");
@@ -266,9 +281,50 @@ public class FileHandler {
         con.sendResponse(213, Long.toString(fs.getSize(file)));
     }
 
-    private void smnt() {
-        // Obsolete command. The server should respond with a 502 code
-        con.sendResponse(502, "SMNT is not implemented in this server");
+    private void mlst(String path) throws IOException {
+        Object file = getFile(path);
+        String facts = Utils.getFacts(fs, file);
+
+        con.sendResponse(250, "- Listing " + fs.getName(file) + "\r\n" + facts);
+        con.sendResponse(250, "End");
+    }
+
+    private void mlsd(String path) throws IOException {
+        Object file = getFile(path);
+        String data = "";
+
+        for(Object f : fs.listFiles(file)) {
+            data += Utils.getFacts(fs, f);
+        }
+
+        con.sendResponse(150, "Sending file information list...");
+        con.sendData(data.getBytes("UTF-8"));
+        con.sendResponse(226, "The file list was sent!");
+    }
+
+    private void mfmt(String[] args) throws IOException {
+        if(args.length < 2) {
+            con.sendResponse(501, "Missing arguments");
+            return;
+        }
+
+        Object file = getFile(args[1]);
+        long time;
+
+        if(!fs.exists(file)) {
+            con.sendResponse(550, "File not found");
+            return;
+        }
+
+        try {
+            time = Utils.fromMdtmTimestamp(args[0]);
+        } catch(ParseException ex) {
+            con.sendResponse(500, "Couldn't parse the time");
+            return;
+        }
+
+        fs.touch(file, time);
+        con.sendResponse(213, "Modify=" + args[0] + "; " + fs.getPath(file));
     }
 
     /**

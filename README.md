@@ -16,11 +16,11 @@ The required minimum implementation is already done, however, there are still co
 * [RFC 2428](https://tools.ietf.org/html/rfc2428) - FTP Extensions for IPv6 and NATs (0/2)
 * [RFC 2640](https://tools.ietf.org/html/rfc2640) - Internationalization of the File Transfer Protocol (0/1)
 * [RFC 2773](https://tools.ietf.org/html/rfc2773) - Encryption using KEA and SKIPJACK
-* [RFC 3659](https://tools.ietf.org/html/rfc3659) - Extensions to FTP (2/4)
+* [RFC 3659](https://tools.ietf.org/html/rfc3659) - Extensions to FTP (4/4)
 * [RFC 4217](https://tools.ietf.org/html/rfc4217) - Securing FTP with TLS
 * [RFC 5797](https://tools.ietf.org/html/rfc5797) - FTP Command and Extension Registry
 * [RFC 7151](https://tools.ietf.org/html/rfc7151) - File Transfer Protocol HOST Command for Virtual Hosts (0/1)
-* [draft-somers-ftp-mfxx-04](https://tools.ietf.org/html/draft-somers-ftp-mfxx-04) The "MFMT", "MFCT", and "MFF" Command Extensions for FTP (0/3)
+* [draft-somers-ftp-mfxx-04](https://tools.ietf.org/html/draft-somers-ftp-mfxx-04) The "MFMT", "MFCT", and "MFF" Command Extensions for FTP (1/3)
 
 # Usage
 
@@ -30,19 +30,19 @@ The required minimum implementation is already done, however, there are still co
 <dependency>
   <groupId>com.guichaguri</groupId>
   <artifactId>minimalftp</artifactId>
-  <version>1.0.2</version>
+  <version>1.0.3</version>
   <type>pom</type>
 </dependency>
 ```
 
 #### Gradle
 ```groovy
-compile 'com.guichaguri:minimalftp:1.0.2'
+compile 'com.guichaguri:minimalftp:1.0.3'
 ```
 
 #### Ivy
 ```xml
-<dependency org='com.guichaguri' name='minimalftp' rev='1.0.2'>
+<dependency org='com.guichaguri' name='minimalftp' rev='1.0.3'>
   <artifact name='minimalftp' ext='pom' />
 </dependency>
 ```

@@ -452,7 +452,7 @@ public class FTPConnection implements Closeable {
             list += feat + "\r\n";
         }
 
-        sendResponse(211, "-Supported Features:\r\n" + list);
+        sendResponse(211, "- Supported Features:\r\n" + list);
         sendResponse(211, "End");
     }
 
@@ -527,7 +527,7 @@ public class FTPConnection implements Closeable {
             return;
         }
 
-        if(line.isEmpty()) return;System.out.println(line);
+        if(line.isEmpty()) return;
 
         process(line);
     }

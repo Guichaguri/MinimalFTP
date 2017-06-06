@@ -180,4 +180,12 @@ public interface IFileSystem<F extends Object> {
      */
     void chmod(F file, int perms) throws IOException;
 
+    /**
+     * Updates the modified time of a file
+     * @param file The file object
+     * @param time The new time in milliseconds
+     * @throws IOException When an error occurs
+     */
+    void touch(F file, long time) throws IOException;
+
 }
