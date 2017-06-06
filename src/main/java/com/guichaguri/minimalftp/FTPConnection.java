@@ -15,7 +15,9 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
@@ -29,6 +31,8 @@ public class FTPConnection implements Closeable {
 
     protected final Map<String, CommandInfo> commands = new HashMap<>();
     protected final Map<String, CommandInfo> siteCommands = new HashMap<>();
+    protected final List<String> features = new ArrayList<>();
+    protected final Map<String, String> options = new HashMap<>();
 
     protected final FTPServer server;
     protected Socket con;
@@ -71,6 +75,12 @@ public class FTPConnection implements Closeable {
         this.thread.start();
 
         registerCommand("SITE", "SITE <command>", this::site);
+        registerCommand("FEAT", "FEAT", this::feat, false);
+        registerCommand("OPTS", "OPTS <option> [value]", this::opts);
+
+        registerFeature("feat"); // Feature Commands (RFC 5797)
+        registerFeature("UTF8");
+        registerOption("UTF8", "ON");
 
         this.conHandler.registerCommands();
         this.fileHandler.registerCommands();
@@ -166,7 +176,11 @@ public class FTPConnection implements Closeable {
         if(con.isClosed()) return;
 
         try {
-            writer.write(code + " " + response + "\r\n");
+            if(!response.isEmpty() && response.charAt(0) == '-') {
+                writer.write(code + response + "\r\n");
+            } else {
+                writer.write(code + " " + response + "\r\n");
+            }
             writer.flush();
         } catch(IOException ex) {
             Utils.closeQuietly(this);
@@ -282,6 +296,34 @@ public class FTPConnection implements Closeable {
             Socket socket = dataConnections.poll();
             if(socket != null) Utils.closeQuietly(socket);
         }
+    }
+
+    /**
+     * Registers a feature for the FEAT command
+     * @param feat The feature name
+     */
+    public void registerFeature(String feat) {
+        if(!features.contains(feat)) {
+            features.add(feat);
+        }
+    }
+
+    /**
+     * Registers an option for the OPTS command
+     * @param option The option name
+     * @param value The default value
+     */
+    public void registerOption(String option, String value) {
+        options.put(option.toUpperCase(), value);
+    }
+
+    /**
+     * Gets an option which may be modified by a OPTS command
+     * @param option The option name
+     * @return The option value
+     */
+    public String getOption(String option) {
+        return options.get(option.toUpperCase());
     }
 
     public void registerSiteCommand(String label, String help, Command cmd) {
@@ -401,6 +443,38 @@ public class FTPConnection implements Closeable {
         processCommand(info, firstSpace != cmd.length() ? cmd.substring(firstSpace + 1) : "");
     }
 
+    /**
+     * FEAT command
+     */
+    protected void feat() {
+        String list = "";
+        for(String feat : features) {
+            list += feat + "\r\n";
+        }
+
+        sendResponse(211, "-Supported Features:\r\n" + list);
+        sendResponse(211, "End");
+    }
+
+    /**
+     * OPTS command
+     * @param opts The option
+     */
+    protected void opts(String[] opts) {
+        if(opts.length < 1) {
+            sendResponse(501, "Missing parameters");
+            return;
+        } else if(!options.containsKey(opts[0].toUpperCase())) {
+            sendResponse(501, "No option found");
+            return;
+        } else if(opts.length < 2) {
+            options.put(opts[0].toUpperCase(), "ON");
+        } else {
+            options.put(opts[0].toUpperCase(), opts[1].toUpperCase());
+        }
+        sendResponse(200, "Option accepted");
+    }
+
     protected void processCommand(CommandInfo info, String args) {
         if(info.needsAuth && !conHandler.isAuthenticated()) {
             sendResponse(530, "Needs authentication");
@@ -453,7 +527,7 @@ public class FTPConnection implements Closeable {
             return;
         }
 
-        if(line.isEmpty()) return;
+        if(line.isEmpty()) return;System.out.println(line);
 
         process(line);
     }

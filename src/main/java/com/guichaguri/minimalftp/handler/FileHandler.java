@@ -67,6 +67,12 @@ public class FileHandler {
         con.registerCommand("XPWD", "XPWD", this::pwd); // Retrieve Working Directory (RFC 775)
         con.registerCommand("XMKD", "XMKD <file>", this::mkd); // Create Directory (RFC 775)
         con.registerCommand("XRMD", "XRMD <file>", this::rmd); // Delete Directory (RFC 775)
+
+        con.registerFeature("base"); // Base Commands (RFC 5797)
+        con.registerFeature("hist"); // Obsolete Commands (RFC 5797)
+        con.registerFeature("REST STREAM"); // Restart in stream mode (RFC 3659)
+        con.registerFeature("MDTM"); // Modification Time (RFC 3659)
+        con.registerFeature("SIZE"); // File Size (RFC 3659)
     }
 
     private Object getFile(String path) throws IOException {

@@ -106,6 +106,13 @@ public class ConnectionHandler {
         con.registerCommand("AUTH", "AUTH <mechanism>", this::auth, false); // Security Mechanism (RFC 2228)
         con.registerCommand("PBSZ", "PBSZ <size>", this::pbsz, false); // Protection Buffer Size (RFC 2228)
         con.registerCommand("PROT", "PROT <level>", this::prot, false); // Data Channel Protection Level (RFC 2228)
+
+        con.registerFeature("base"); // Base Commands (RFC 5797)
+        con.registerFeature("secu"); // Security Commands (RFC 5797)
+        con.registerFeature("TYPE A;AN;AT;AC;L;I"); // Supported Types (RFC 5797)
+        con.registerFeature("AUTH TLS"); // SSL/TLS support (RFC 4217)
+        con.registerFeature("PBSZ"); // Protection Buffer Size (RFC 2228)
+        con.registerFeature("PROT"); // Protection Level (RFC 2228)
     }
 
     private void noop() {
