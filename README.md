@@ -1,19 +1,21 @@
 # MinimalFTP [![Build Status](https://travis-ci.org/Guichaguri/MinimalFTP.svg?branch=master)](https://travis-ci.org/Guichaguri/MinimalFTP)
 A lightweight, simple FTP server. Pure Java, no libraries.
 
+Although it's named "minimal", it supports 53 FTP commands, TLS/SSL, custom file system, custom user authentication, custom commands, etc
+
 ## Specification Support
 The required minimum implementation is already done, however, there are still commands that can be implemented.
 
 * [RFC 959](https://tools.ietf.org/html/rfc959) - File Transfer Protocol (33/33)
-* [RFC 697](https://tools.ietf.org/html/rfc697) - CWD Command of FTP (1/1)
-* [RFC 737](https://tools.ietf.org/html/rfc737) - FTP Extension: XSEN (0/3)
-* [RFC 743](https://tools.ietf.org/html/rfc743) - FTP extension: XRSQ/XRCP (0/4)
-* [RFC 775](https://tools.ietf.org/html/rfc775) - Directory oriented FTP commands (5/5)
+* [RFC 697](https://tools.ietf.org/html/rfc697) - CWD Command of FTP (1/1) (Obsolete)
+* [RFC 737](https://tools.ietf.org/html/rfc737) - FTP Extension: XSEN (0/3) (Obsolete)
+* [RFC 743](https://tools.ietf.org/html/rfc743) - FTP extension: XRSQ/XRCP (0/4) (Obsolete)
+* [RFC 775](https://tools.ietf.org/html/rfc775) - Directory oriented FTP commands (5/5) (Obsolete)
 * [RFC 1123](https://tools.ietf.org/html/rfc1123#page-29) - Requirements for Internet Hosts
-* [RFC 1639](https://tools.ietf.org/html/rfc1639) - FTP Operation Over Big Address Records (0/2)
+* [RFC 1639](https://tools.ietf.org/html/rfc1639) - FTP Operation Over Big Address Records (2/2) (Obsolete)
 * [RFC 2228](https://tools.ietf.org/html/rfc2228) - FTP Security Extensions (3/8)
 * [RFC 2389](https://tools.ietf.org/html/rfc2389) - Feature negotiation mechanism for the File Transfer Protocol (2/2)
-* [RFC 2428](https://tools.ietf.org/html/rfc2428) - FTP Extensions for IPv6 and NATs (0/2)
+* [RFC 2428](https://tools.ietf.org/html/rfc2428) - FTP Extensions for IPv6 and NATs (2/2)
 * [RFC 2640](https://tools.ietf.org/html/rfc2640) - Internationalization of the File Transfer Protocol (0/1)
 * [RFC 2773](https://tools.ietf.org/html/rfc2773) - Encryption using KEA and SKIPJACK
 * [RFC 3659](https://tools.ietf.org/html/rfc3659) - Extensions to FTP (4/4)

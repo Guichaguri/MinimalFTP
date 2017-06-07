@@ -96,8 +96,8 @@ public class ConnectionHandler {
         con.registerCommand("PASS", "PASS <password>", this::pass, false); // Set Password
         con.registerCommand("ACCT", "ACCT <info>", this::acct, false); // Account Info
         con.registerCommand("SYST", "SYST", this::syst); // System Information
-        con.registerCommand("PORT", "PORT <host-port>", this::port); // Active Mode
         con.registerCommand("PASV", "PASV", this::pasv); // Passive Mode
+        con.registerCommand("PORT", "PORT <address>", this::port); // Active Mode
         con.registerCommand("TYPE", "TYPE <type>", this::type); // Binary Flag
         con.registerCommand("STRU", "STRU <type>", this::stru); // Structure Type
         con.registerCommand("MODE", "MODE <mode>", this::mode); // Change Mode
@@ -107,12 +107,22 @@ public class ConnectionHandler {
         con.registerCommand("PBSZ", "PBSZ <size>", this::pbsz, false); // Protection Buffer Size (RFC 2228)
         con.registerCommand("PROT", "PROT <level>", this::prot, false); // Data Channel Protection Level (RFC 2228)
 
+        con.registerCommand("LPSV", "LPSV", this::lpsv); // Long Passive Mode (RFC 1639) (Obsolete)
+        con.registerCommand("LPRT", "LPRT <address>", this::lprt); // Long Active Mode (RFC 1639) (Obsolete)
+
+        con.registerCommand("EPSV", "EPSV", this::epsv); // Extended Passive Mode (RFC 2428)
+        con.registerCommand("EPRT", "EPRT <address>", this::eprt); // Extended Active Mode (RFC 2428)
+
         con.registerFeature("base"); // Base Commands (RFC 5797)
         con.registerFeature("secu"); // Security Commands (RFC 5797)
+        con.registerFeature("hist"); // Obsolete Commands (RFC 5797)
+        con.registerFeature("nat6"); // Extended Passive/Active Commands (RFC 5797)
         con.registerFeature("TYPE A;AN;AT;AC;L;I"); // Supported Types (RFC 5797)
         con.registerFeature("AUTH TLS"); // SSL/TLS support (RFC 4217)
         con.registerFeature("PBSZ"); // Protection Buffer Size (RFC 2228)
         con.registerFeature("PROT"); // Protection Level (RFC 2228)
+        con.registerFeature("EPSV"); // Extended Passive Mode (RFC 2428)
+        con.registerFeature("EPRT"); // Extended Active Mode (RFC 2428)
     }
 
     private void noop() {
@@ -257,7 +267,7 @@ public class ConnectionHandler {
         String address = addr[0] + "," + addr[1] + "," + addr[2] + "," + addr[3];
         String addressPort = port / 256 + "," + port % 256;
 
-        con.sendResponse(227, "Enabling Passive Mode (" + address + "," + addressPort + ")");
+        con.sendResponse(227, "Enabled Passive Mode (" + address + "," + addressPort + ")");
     }
 
     private void port(String data) {
@@ -271,6 +281,7 @@ public class ConnectionHandler {
             Utils.closeQuietly(passiveServer);
             passiveServer = null;
         }
+        con.sendResponse(200, "Enabled Active Mode");
     }
 
     private void stat() throws IOException {
@@ -339,6 +350,80 @@ public class ConnectionHandler {
         } else {
             con.sendResponse(502, "Unknown protection level");
         }
+    }
+
+    private void lpsv() throws IOException { // Obsolete Command
+        FTPServer server = con.getServer();
+        passiveServer = Utils.createServer(0, 5, server.getAddress(), server.getSSLContext(), secureData);
+        passive = true;
+
+        String host = passiveServer.getInetAddress().getHostAddress();
+        int port = passiveServer.getLocalPort();
+
+        if(host.equals("0.0.0.0")) {
+            // Sends a valid address instead of a wildcard
+            host = InetAddress.getLocalHost().getHostAddress();
+        }
+
+        String[] addr = host.split("\\.");
+
+        String address = addr[0] + "," + addr[1] + "," + addr[2] + "," + addr[3];
+        String addressPort = port / 256 + "," + port % 256;
+
+        con.sendResponse(229, "Enabled Passive Mode (4,4," + address + ",2," + addressPort + ")");
+    }
+
+    private void lprt(String data) { // Obsolete Command
+        String[] args = data.split(",");
+
+        int hostLength = Integer.parseInt(args[1]);
+        int portLength = Integer.parseInt(args[hostLength + 2]);
+
+        String host = "";
+        for(int i = 0; i < hostLength; i++) {
+            host += "." + args[i + 2];
+        }
+        activeHost = host.substring(1);
+
+        int port = 0;
+        for(int i = 0; i < portLength; i++) {
+            int num = Integer.parseInt(args[i + hostLength + 3]);
+            int pos = (portLength - i - 1) * 8;
+            port |= num << pos;
+        }
+        activePort = port;
+
+        passive = false;
+
+        if(passiveServer != null) {
+            Utils.closeQuietly(passiveServer);
+            passiveServer = null;
+        }
+        con.sendResponse(200, "Enabled Active Mode");
+    }
+
+    private void epsv() throws IOException {
+        FTPServer server = con.getServer();
+        passiveServer = Utils.createServer(0, 5, server.getAddress(), server.getSSLContext(), secureData);
+        passive = true;
+
+        con.sendResponse(229, "Enabled Passive Mode (|||" + passiveServer.getLocalPort() + "|)");
+    }
+
+    private void eprt(String data) {
+        char delimiter = data.charAt(0);
+        String[] args = data.split(String.format("\\%s", delimiter));
+
+        activeHost = args[2];
+        activePort = Integer.parseInt(args[3]);
+        passive = false;
+
+        if(passiveServer != null) {
+            Utils.closeQuietly(passiveServer);
+            passiveServer = null;
+        }
+
+        con.sendResponse(200, "Enabled Active Mode");
     }
 
     private boolean authenticate(IUserAuthenticator auth, String password) {
