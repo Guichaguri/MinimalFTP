@@ -65,11 +65,11 @@ public class FileHandler {
         con.registerCommand("MLST", "MLST <file>", this::mlst); // File Information (RFC 3659)
         con.registerCommand("MLSD", "MLSD <file>", this::mlsd); // List Files Information (RFC 3659)
 
-        con.registerCommand("XCWD", "XCWD <file>", this::cwd); // Change Working Directory (RFC 775)
-        con.registerCommand("XCUP", "XCUP", this::cdup); // Change to Parent Directory (RFC 775)
-        con.registerCommand("XPWD", "XPWD", this::pwd); // Retrieve Working Directory (RFC 775)
-        con.registerCommand("XMKD", "XMKD <file>", this::mkd); // Create Directory (RFC 775)
-        con.registerCommand("XRMD", "XRMD <file>", this::rmd); // Delete Directory (RFC 775)
+        con.registerCommand("XCWD", "XCWD <file>", this::cwd); // Change Working Directory (RFC 775) (Obsolete)
+        con.registerCommand("XCUP", "XCUP", this::cdup); // Change to Parent Directory (RFC 775) (Obsolete)
+        con.registerCommand("XPWD", "XPWD", this::pwd); // Retrieve Working Directory (RFC 775) (Obsolete)
+        con.registerCommand("XMKD", "XMKD <file>", this::mkd); // Create Directory (RFC 775) (Obsolete)
+        con.registerCommand("XRMD", "XRMD <file>", this::rmd); // Delete Directory (RFC 775) (Obsolete)
 
         con.registerCommand("MFMT", "MFMT <time> <file>", this::mfmt); // Change Modified Time (draft-somers-ftp-mfxx-04)
 
@@ -78,11 +78,11 @@ public class FileHandler {
         con.registerFeature("REST STREAM"); // Restart in stream mode (RFC 3659)
         con.registerFeature("MDTM"); // Modification Time (RFC 3659)
         con.registerFeature("SIZE"); // File Size (RFC 3659)
-        con.registerFeature("MLST"); // File Information (RFC 3659)
-        con.registerFeature("MLSD"); // List Files Information (RFC 3659)
+        con.registerFeature("MLST Type*;Size*;Modify*;Perm*;"); // File Information (RFC 3659)
         con.registerFeature("TVFS"); // TVFS Mechanism (RFC 3659)
         con.registerFeature("MFMT"); // Change Modified Time (draft-somers-ftp-mfxx-04)
 
+        con.registerOption("MLST", "Type;Size;Modify;Perm;");
     }
 
     private Object getFile(String path) throws IOException {
@@ -283,7 +283,9 @@ public class FileHandler {
 
     private void mlst(String path) throws IOException {
         Object file = getFile(path);
-        String facts = Utils.getFacts(fs, file);
+
+        String[] options = con.getOption("MLST").split(";");
+        String facts = Utils.getFacts(fs, file, options);
 
         con.sendResponse(250, "- Listing " + fs.getName(file) + "\r\n" + facts);
         con.sendResponse(250, "End");
@@ -291,10 +293,11 @@ public class FileHandler {
 
     private void mlsd(String path) throws IOException {
         Object file = getFile(path);
+        String[] options = con.getOption("MLST").split(";");
         String data = "";
 
         for(Object f : fs.listFiles(file)) {
-            data += Utils.getFacts(fs, f);
+            data += Utils.getFacts(fs, f, options);
         }
 
         con.sendResponse(150, "Sending file information list...");

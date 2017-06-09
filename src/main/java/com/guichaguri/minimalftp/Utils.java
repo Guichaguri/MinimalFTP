@@ -88,27 +88,36 @@ public class Utils {
         return perm;
     }
 
-    public static <F> String getFacts(IFileSystem<F> fs, F file) {
-        int perms = fs.getPermissions(file);
-        boolean dir = fs.isDirectory(file);
-        String perm = "";
-        String type = dir ? "dir" : "file";
-
-        if(hasPermission(perms, CAT_OWNER + TYPE_READ)) {
-            perm += dir ? "el" : "r";
-        }
-        if(hasPermission(perms, CAT_OWNER + TYPE_WRITE)) {
-            perm += "f";
-            perm += dir ? "pcm" : "adw";
-        }
-
+    public static <F> String getFacts(IFileSystem<F> fs, F file, String[] options) {
         String facts = "";
-        facts += "Modify=" + Utils.toMdtmTimestamp(fs.getLastModified(file)) + ";";
-        facts += "Perm=" + perm + ";";
-        facts += "Size=" + fs.getSize(file) + ";";
-        facts += "Type=" + type + ";";
-        facts += " " + fs.getPath(file) + "\r\n";
+        boolean dir = fs.isDirectory(file);
 
+        for(String opt : options) {
+            opt = opt.toLowerCase();
+
+            if(opt.equals("modify")) {
+                facts += "Modify=" + Utils.toMdtmTimestamp(fs.getLastModified(file)) + ";";
+            } else if(opt.equals("size")) {
+                facts += "Size=" + fs.getSize(file) + ";";
+            } else if(opt.equals("type")) {
+                facts += "Type=" + (dir ? "dir" : "file") + ";";
+            } else if(opt.equals("perm")) {
+                int perms = fs.getPermissions(file);
+                String perm = "";
+
+                if(hasPermission(perms, CAT_OWNER + TYPE_READ)) {
+                    perm += dir ? "el" : "r";
+                }
+                if(hasPermission(perms, CAT_OWNER + TYPE_WRITE)) {
+                    perm += "f";
+                    perm += dir ? "pcm" : "adw";
+                }
+
+                facts += "Perm=" + perm + ";";
+            }
+        }
+
+        facts += " " + fs.getPath(file) + "\r\n";
         return facts;
     }
 
