@@ -16,15 +16,17 @@
 
 package com.guichaguri.minimalftp.handler;
 
-import com.guichaguri.minimalftp.api.IFileSystem;
 import com.guichaguri.minimalftp.FTPConnection;
 import com.guichaguri.minimalftp.Utils;
+import com.guichaguri.minimalftp.api.IFileSystem;
 import com.guichaguri.minimalftp.api.ResponseException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.UUID;
+import javax.xml.bind.DatatypeConverter;
 
 /**
  * Handles file management commands
@@ -89,6 +91,10 @@ public class FileHandler {
 
         con.registerCommand("MFMT", "MFMT <time> <file>", this::mfmt); // Change Modified Time (draft-somers-ftp-mfxx-04)
 
+        con.registerCommand("MD5", "MD5 <file>", this::md5); // MD5 Digest (draft-twine-ftpmd5-00) (Obsolete)
+
+        con.registerCommand("HASH", "HASH <file>", this::hash); // Hash Digest (draft-bryan-ftpext-hash-02)
+
         con.registerFeature("base"); // Base Commands (RFC 5797)
         con.registerFeature("hist"); // Obsolete Commands (RFC 5797)
         con.registerFeature("REST STREAM"); // Restart in stream mode (RFC 3659)
@@ -97,8 +103,11 @@ public class FileHandler {
         con.registerFeature("MLST Type*;Size*;Modify*;Perm*;"); // File Information (RFC 3659)
         con.registerFeature("TVFS"); // TVFS Mechanism (RFC 3659)
         con.registerFeature("MFMT"); // Change Modified Time (draft-somers-ftp-mfxx-04)
+        con.registerFeature("MD5"); // MD5 Digest (draft-twine-ftpmd5-00)
+        con.registerFeature("HASH MD5;SHA-1;SHA-256"); // Hash Digest (draft-bryan-ftpext-hash-02)
 
         con.registerOption("MLST", "Type;Size;Modify;Perm;");
+        con.registerOption("HASH", "MD5");
     }
 
     private Object getFile(String path) throws IOException {
@@ -344,6 +353,33 @@ public class FileHandler {
 
         fs.touch(file, time);
         con.sendResponse(213, "Modify=" + args[0] + "; " + fs.getPath(file));
+    }
+
+    private void md5(String path) throws IOException {
+        try {
+            Object file = getFile(path);
+            byte[] digest = fs.getDigest(file, "MD5");
+            String md5 = DatatypeConverter.printHexBinary(digest);
+
+            con.sendResponse(251, fs.getName(file) + " " + md5);
+        } catch(NoSuchAlgorithmException ex) {
+            // Shouldn't ever happen
+            con.sendResponse(504, ex.getMessage());
+        }
+    }
+
+    private void hash(String path) throws IOException {
+        try {
+            Object file = getFile(path);
+            String hash = con.getOption("HASH");
+            byte[] digest = fs.getDigest(file, hash);
+            String hex = DatatypeConverter.printHexBinary(digest);
+
+            // TODO RANG
+            con.sendResponse(213, hash + " 0-" + fs.getSize(file) + " " + hex + " " + fs.getName(file));
+        } catch(NoSuchAlgorithmException ex) {
+            con.sendResponse(504, ex.getMessage());
+        }
     }
 
     /**

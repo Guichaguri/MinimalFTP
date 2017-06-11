@@ -19,6 +19,8 @@ package com.guichaguri.minimalftp.api;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * Represents a File System
@@ -101,6 +103,29 @@ public interface IFileSystem<F extends Object> {
      * @return The group name
      */
     String getGroup(F file);
+
+    /**
+     * Gets (or calculates) the hash digest of a file
+     * "MD5", "SHA-1" and "SHA-256" are required to be implemented
+     *
+     * @param file The file object
+     * @param algorithm The digest algorithm
+     * @return The hash digest
+     * @throws NoSuchAlgorithmException When the algorithm is not implement
+     * @throws IOException When an error occurs
+     */
+    default byte[] getDigest(F file, String algorithm) throws IOException, NoSuchAlgorithmException {
+        MessageDigest d = MessageDigest.getInstance(algorithm);
+        InputStream in = readFile(file, 0);
+        byte[] bytes = new byte[1024];
+        int length;
+
+        while((length = in.read(bytes)) != -1) {
+            d.update(bytes, 0, length);
+        }
+
+        return d.digest();
+    }
 
     /**
      * Gets the parent directory of a file.

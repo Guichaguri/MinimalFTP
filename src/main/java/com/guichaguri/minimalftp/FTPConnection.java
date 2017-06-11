@@ -483,15 +483,16 @@ public class FTPConnection implements Closeable {
         }
 
         String option = opts[0].toUpperCase();
-        String value = opts.length < 2 ? "ON" : opts[1].toUpperCase();
 
         if(!options.containsKey(option)) {
             sendResponse(501, "No option found");
             return;
+        } else if(opts.length < 2) {
+            sendResponse(200, options.get(option));
+        } else {
+            options.put(option, opts[1].toUpperCase());
+            sendResponse(200, "Option updated");
         }
-
-        options.put(option, value);
-        sendResponse(200, "Option updated");
     }
 
     protected void processCommand(CommandInfo info, String args) {
@@ -546,7 +547,7 @@ public class FTPConnection implements Closeable {
             return;
         }
 
-        if(line.isEmpty()) return;
+        if(line.isEmpty()) return;System.out.println(line);
 
         process(line);
     }
