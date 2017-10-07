@@ -45,7 +45,7 @@ public class Utils {
     public static final int TYPE_WRITE = 1;
     public static final int TYPE_EXECUTE = 0;
 
-    private static final SimpleDateFormat mdtmFormat = new SimpleDateFormat("YYYYMMDDHHmmss", Locale.ENGLISH);
+    private static final SimpleDateFormat mdtmFormat = new SimpleDateFormat("YYYYMMddHHmmss", Locale.ENGLISH);
     private static final SimpleDateFormat hourFormat = new SimpleDateFormat("MMM dd HH:mm", Locale.ENGLISH);
     private static final SimpleDateFormat yearFormat = new SimpleDateFormat("MMM dd YYYY", Locale.ENGLISH);
     private static final long sixMonths = 183L * 24L * 60L * 60L * 1000L;
@@ -112,11 +112,11 @@ public class Utils {
             opt = opt.toLowerCase();
 
             if(opt.equals("modify")) {
-                facts += "Modify=" + Utils.toMdtmTimestamp(fs.getLastModified(file)) + ";";
+                facts += "modify=" + Utils.toMdtmTimestamp(fs.getLastModified(file)) + ";";
             } else if(opt.equals("size")) {
-                facts += "Size=" + fs.getSize(file) + ";";
+                facts += "size=" + fs.getSize(file) + ";";
             } else if(opt.equals("type")) {
-                facts += "Type=" + (dir ? "dir" : "file") + ";";
+                facts += "type=" + (dir ? "dir" : "file") + ";";
             } else if(opt.equals("perm")) {
                 int perms = fs.getPermissions(file);
                 String perm = "";
@@ -129,11 +129,11 @@ public class Utils {
                     perm += dir ? "pcm" : "adw";
                 }
 
-                facts += "Perm=" + perm + ";";
+                facts += "perm=" + perm + ";";
             }
         }
 
-        facts += " " + fs.getPath(file) + "\r\n";
+        facts += " " + fs.getName(file) + "\r\n";
         return facts;
     }
 

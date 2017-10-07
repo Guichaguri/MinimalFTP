@@ -306,8 +306,8 @@ public class FileHandler {
         con.sendResponse(213, Long.toString(fs.getSize(file)));
     }
 
-    private void mlst(String path) throws IOException {
-        Object file = getFile(path);
+    private void mlst(String[] args) throws IOException {
+        Object file = args.length > 0 ? getFile(args[0]) : cwd;
 
         String[] options = con.getOption("MLST").split(";");
         String facts = Utils.getFacts(fs, file, options);
@@ -316,17 +316,19 @@ public class FileHandler {
         con.sendResponse(250, "End");
     }
 
-    private void mlsd(String path) throws IOException {
-        Object file = getFile(path);
-        String[] options = con.getOption("MLST").split(";");
-        String data = "";
-
-        for(Object f : fs.listFiles(file)) {
-            data += Utils.getFacts(fs, f, options);
-        }
+    private void mlsd(String[] args) throws IOException {
+        Object file = args.length > 0 ? getFile(args[0]) : cwd;
 
         con.sendResponse(150, "Sending file information list...");
-        con.sendData(data.getBytes("UTF-8"));
+
+        String[] options = con.getOption("MLST").split(";");
+        StringBuilder data = new StringBuilder();
+
+        for(Object f : fs.listFiles(file)) {
+            data.append(Utils.getFacts(fs, f, options));
+        }
+
+        con.sendData(data.toString().getBytes("UTF-8"));
         con.sendResponse(226, "The file list was sent!");
     }
 
