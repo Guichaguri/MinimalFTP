@@ -1,5 +1,5 @@
 group 'com.guichaguri'
-version '1.0.3'
+version '1.0.4'
 
 buildscript {
     repositories {
@@ -26,20 +26,20 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
-def publishSettings = new Properties()
-def propFile = file('publish.properties');
-if(propFile.exists()) {
-    publishSettings.load(new FileInputStream(propFile))
-}
-
 bintray {
+    def publishSettings = new Properties()
+    def propFile = file('publish.properties')
+    if(propFile.exists()) {
+        publishSettings.load(new FileInputStream(propFile))
+    }
+
     user = publishSettings.bintray_user
     key = publishSettings.bintray_key
     publications = ['MavenBuild']
     pkg {
         repo = 'maven'
         name = 'MinimalFTP'
-        licenses = ['GPL-3.0']
+        licenses = ['Apache-2.0']
         vcsUrl = 'https://github.com/Guichaguri/MinimalFTP.git'
 
         version {

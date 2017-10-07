@@ -463,12 +463,14 @@ public class FTPConnection implements Closeable {
      * FEAT command
      */
     protected void feat() {
-        String list = "";
+        StringBuilder list = new StringBuilder();
+        list.append("- Supported Features:\r\n");
+
         for(String feat : features) {
-            list += feat + "\r\n";
+            list.append(' ').append(feat).append("\r\n");
         }
 
-        sendResponse(211, "- Supported Features:\r\n" + list);
+        sendResponse(211, list.toString());
         sendResponse(211, "End");
     }
 
@@ -486,7 +488,6 @@ public class FTPConnection implements Closeable {
 
         if(!options.containsKey(option)) {
             sendResponse(501, "No option found");
-            return;
         } else if(opts.length < 2) {
             sendResponse(200, options.get(option));
         } else {

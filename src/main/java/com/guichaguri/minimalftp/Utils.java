@@ -105,6 +105,11 @@ public class Utils {
     }
 
     public static <F> String getFacts(IFileSystem<F> fs, F file, String[] options) {
+        // Intended Format
+        // modify=20170808052431;size=7045120;type=file;perm=rfadw; video.mp4
+        // modify=20170526215012;size=380;type=file;perm=rfadw; data.txt
+        // modify=20171012082146;size=0;type=dir;perm=elfpcm; directory
+
         String facts = "";
         boolean dir = fs.isDirectory(file);
 
@@ -158,7 +163,7 @@ public class Utils {
     }
 
     public static <F> InputStream readFileSystem(IFileSystem<F> fs, F file, long start, boolean ascii) throws IOException {
-        if(ascii) {
+        if(ascii && start > 0) {
             InputStream in = new BufferedInputStream(fs.readFile(file, 0));
             long offset = 0;
 

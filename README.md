@@ -1,7 +1,17 @@
 # MinimalFTP [![Build Status](https://travis-ci.org/Guichaguri/MinimalFTP.svg?branch=master)](https://travis-ci.org/Guichaguri/MinimalFTP)
 A lightweight, simple FTP server. Pure Java, no libraries.
 
-Although it's named "minimal", it supports 53 FTP commands, TLS/SSL, custom file system, custom user authentication, custom commands, etc
+## Features
+Although it's named "minimal", it supports a bunch of features:
+
+* 100% Java, no libraries
+* Lightweight
+* Supports 55 FTP commands
+* TLS/SSL support
+* Custom File System support
+* Custom User Authentication support
+* Custom Commands support
+* Support to obsolete commands (some FTP clients might still use them)
 
 ## Specification Support
 The required minimum implementation is already done, however, there are still commands that can be implemented.
@@ -22,29 +32,34 @@ The required minimum implementation is already done, however, there are still co
 * [RFC 4217](https://tools.ietf.org/html/rfc4217) - Securing FTP with TLS
 * [RFC 5797](https://tools.ietf.org/html/rfc5797) - FTP Command and Extension Registry
 * [RFC 7151](https://tools.ietf.org/html/rfc7151) - File Transfer Protocol HOST Command for Virtual Hosts (0/1)
-* [draft-somers-ftp-mfxx-04](https://tools.ietf.org/html/draft-somers-ftp-mfxx-04) The "MFMT", "MFCT", and "MFF" Command Extensions for FTP (1/3)
+* [draft-twine-ftpmd5-00](https://tools.ietf.org/html/draft-twine-ftpmd5-00) - The "MD5" and "MMD5" FTP Command Extensions (1/2) (Obsolete)
+* [draft-somers-ftp-mfxx-04](https://tools.ietf.org/html/draft-somers-ftp-mfxx-04) - The "MFMT", "MFCT", and "MFF" Command Extensions for FTP (1/3)
+* [draft-bryan-ftpext-hash-02](https://tools.ietf.org/html/draft-bryan-ftpext-hash-02) - File Transfer Protocol HASH Command for Cryptographic Hashes (1/1)
+* [draft-bryan-ftp-range-08](https://tools.ietf.org/html/draft-bryan-ftp-range-08) - File Transfer Protocol RANG Command for Octet Ranges (0/1)
 
 # Usage
 
 ### Dependency
+MinimalFTP is published on JCenter and Maven Central
+
 #### Maven
 ```xml
 <dependency>
   <groupId>com.guichaguri</groupId>
   <artifactId>minimalftp</artifactId>
-  <version>1.0.3</version>
+  <version>1.0.4</version>
   <type>pom</type>
 </dependency>
 ```
 
 #### Gradle
 ```groovy
-compile 'com.guichaguri:minimalftp:1.0.3'
+compile 'com.guichaguri:minimalftp:1.0.4'
 ```
 
 #### Ivy
 ```xml
-<dependency org='com.guichaguri' name='minimalftp' rev='1.0.3'>
+<dependency org='com.guichaguri' name='minimalftp' rev='1.0.4'>
   <artifact name='minimalftp' ext='pom' />
 </dependency>
 ```
