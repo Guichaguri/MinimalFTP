@@ -123,8 +123,14 @@ public class FileHandler {
     }
 
     private void cwd(String path) throws IOException {
-        cwd = getFile(path);
-        con.sendResponse(250, "The working directory was changed");
+        Object dir = getFile(path);
+
+        if(fs.isDirectory(dir)) {
+            cwd = dir;
+            con.sendResponse(250, "The working directory was changed");
+        } else {
+            con.sendResponse(550, "Not a valid directory");
+        }
     }
 
     private void cdup() throws IOException {
@@ -223,28 +229,46 @@ public class FileHandler {
     private void list(String[] args) throws IOException {
         con.sendResponse(150, "Sending file list...");
 
-        Object dir = args.length > 0 ? getFile(args[0]) : cwd;
-        String data = "";
+        // "-l" is not present in any specification, but chrome uses it
+        // TODO remove this when the bug gets fixed
+        // https://bugs.chromium.org/p/chromium/issues/detail?id=706905
+        Object dir = args.length > 0 && !args[0].equals("-l") ? getFile(args[0]) : cwd;
 
-        for(Object file : fs.listFiles(dir)) {
-            data += Utils.format(fs, file);
+        if(!fs.isDirectory(dir)) {
+            con.sendResponse(550, "Not a directory");
+            return;
         }
 
-        con.sendData(data.getBytes("UTF-8"));
+        StringBuilder data = new StringBuilder();
+
+        for(Object file : fs.listFiles(dir)) {
+            data.append(Utils.format(fs, file));
+        }
+
+        con.sendData(data.toString().getBytes("UTF-8"));
         con.sendResponse(226, "The list was sent");
     }
 
     private void nlst(String[] args) throws IOException {
         con.sendResponse(150, "Sending file list...");
 
-        Object dir = args.length > 0 ? getFile(args[0]) : cwd;
-        String data = "";
+        // "-l" is not present in any specification, but chrome uses it
+        // TODO remove this when the bug gets fixed
+        // https://bugs.chromium.org/p/chromium/issues/detail?id=706905
+        Object dir = args.length > 0 && !args[0].equals("-l") ? getFile(args[0]) : cwd;
 
-        for(Object file : fs.listFiles(dir)) {
-            data += fs.getName(file) + "\r\n";
+        if(!fs.isDirectory(dir)) {
+            con.sendResponse(550, "Not a directory");
+            return;
         }
 
-        con.sendData(data.getBytes("UTF-8"));
+        StringBuilder data = new StringBuilder();
+
+        for(Object file : fs.listFiles(dir)) {
+            data.append(fs.getName(file)).append("\r\n");
+        }
+
+        con.sendData(data.toString().getBytes("UTF-8"));
         con.sendResponse(226, "The list was sent");
     }
 
@@ -309,6 +333,11 @@ public class FileHandler {
     private void mlst(String[] args) throws IOException {
         Object file = args.length > 0 ? getFile(args[0]) : cwd;
 
+        if(!fs.exists(file)) {
+            con.sendResponse(550, "File not found");
+            return;
+        }
+
         String[] options = con.getOption("MLST").split(";");
         String facts = Utils.getFacts(fs, file, options);
 
@@ -318,6 +347,11 @@ public class FileHandler {
 
     private void mlsd(String[] args) throws IOException {
         Object file = args.length > 0 ? getFile(args[0]) : cwd;
+
+        if(!fs.isDirectory(file)) {
+            con.sendResponse(550, "Not a directory");
+            return;
+        }
 
         con.sendResponse(150, "Sending file information list...");
 
