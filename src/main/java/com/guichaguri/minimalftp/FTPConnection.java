@@ -67,7 +67,8 @@ public class FTPConnection implements Closeable {
 
     /**
      * Creates a new FTP connection.
-     * Usually initialized by a {@link FTPServer}
+     *
+     * Initialized by a {@link FTPServer}
      *
      * @param server The server which received the connection
      * @param con The connection socket
@@ -104,7 +105,7 @@ public class FTPConnection implements Closeable {
     }
 
     /**
-     * The server which the connection belongs to
+     * Gets the server which the connection belongs
      * @return The {@link FTPServer} that received this connection
      */
     public FTPServer getServer() {
@@ -128,7 +129,7 @@ public class FTPConnection implements Closeable {
     }
 
     /**
-     * Whether the connection is authenticated
+     * Gets whether the connection is authenticated
      * @return {@code true} when it's authenticated, {@code false} otherwise
      */
     public boolean isAuthenticated() {
@@ -161,8 +162,10 @@ public class FTPConnection implements Closeable {
 
     /**
      * Sets the new file system for this connection.
+     *
      * Calling this method can result into desynchronization for the connection.
-     * Please, if you want to change the file system, use a {@link IUserAuthenticator}
+     *
+     * Use an {@link IUserAuthenticator} for custom file systems.
      *
      * @param fs The new file system
      */
@@ -315,7 +318,7 @@ public class FTPConnection implements Closeable {
     }
 
     /**
-     * Registers a feature for the FEAT command
+     * Registers a feature line for the FEAT command
      * @param feat The feature name
      */
     public void registerFeature(String feat) {
@@ -379,7 +382,7 @@ public class FTPConnection implements Closeable {
     }
 
     /**
-     * Internally registers a SITE command
+     * Internally registers a SITE sub-command
      * @param label The command name
      * @param help The help message
      * @param cmd The command function
@@ -548,13 +551,14 @@ public class FTPConnection implements Closeable {
             return;
         }
 
-        if(line.isEmpty()) return;System.out.println(line);
+        if(line.isEmpty()) return;
 
         process(line);
     }
 
     /**
      * Stops the connection, but does not removes it from the list.
+     *
      * For a complete cleanup, use {@link #close()} instead
      * @throws IOException When an I/O error occurs
      */
@@ -568,6 +572,10 @@ public class FTPConnection implements Closeable {
         con.close();
     }
 
+    /**
+     * Interrupts and disposes the connection
+     * @throws IOException When an I/O error occurs
+     */
     @Override
     public void close() throws IOException {
         stop();

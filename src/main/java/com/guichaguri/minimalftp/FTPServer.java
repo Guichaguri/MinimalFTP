@@ -87,6 +87,7 @@ public class FTPServer implements Closeable {
 
     /**
      * Sets the authenticator instance.
+     *
      * Not only you can have your own user database, but you can also
      * provide a different file system depending on the user.
      *
@@ -108,7 +109,8 @@ public class FTPServer implements Closeable {
 
     /**
      * Sets the SSL context for secure connections.
-     * This is required for supporting TLS/SLL
+     *
+     * This is required for supporting TLS/SLL.
      *
      * @param ssl The context
      */
@@ -117,9 +119,10 @@ public class FTPServer implements Closeable {
     }
 
     /**
-     * Sets whether the security will be explicit or implicit
-     * A server in explicit mode will support both secure and insecure connections
-     * A server in implicit mode will only support secure connections
+     * Sets whether the security will be explicit or implicit.
+     *
+     * A server in explicit mode will support both secure and insecure connections.
+     * A server in implicit mode will only support secure connections.
      *
      * In order to support SSL, a context must be given with {@link #setSSLContext(SSLContext)}
      *
@@ -131,8 +134,10 @@ public class FTPServer implements Closeable {
 
     /**
      * Sets the idle timeout in milliseconds
-     * Connections that are idle (no commands or transfers) for the specified time will be disconnected
-     * The default and recommended time is 5 minutes
+     *
+     * Connections that are idle (no commands or transfers) for the specified time will be disconnected.
+     *
+     * The default and recommended time is 5 minutes.
      *
      * @param idleTimeout The time in milliseconds
      */
@@ -161,7 +166,7 @@ public class FTPServer implements Closeable {
     }
 
     /**
-     * Starts the FTP server asynchronously
+     * Starts the FTP server asynchronously.
      *
      * @param port The server port
      * @throws IOException When an error occurs while starting the server
@@ -171,7 +176,7 @@ public class FTPServer implements Closeable {
     }
 
     /**
-     * Starts the FTP server asynchronously
+     * Starts the FTP server asynchronously.
      *
      * @param address The server address or {@code null} for a local address
      * @param port The server port or {@code 0} to automatically allocate the port
@@ -189,9 +194,9 @@ public class FTPServer implements Closeable {
     }
 
     /**
-     * Starts the FTP server synchronously
-     * It will block the current thread
-     * Connections to the server will still create new threads
+     * Starts the FTP server synchronously, blocking the current thread.
+     *
+     * Connections to the server will still create new threads.
      *
      * @param port The server port
      * @throws IOException When an error occurs while starting the server
@@ -201,9 +206,9 @@ public class FTPServer implements Closeable {
     }
 
     /**
-     * Starts the FTP server synchronously
-     * It will block the current thread
-     * Connections to the server will still create new threads
+     * Starts the FTP server synchronously, blocking the current thread.
+     *
+     * Connections to the server will still create new threads.
      *
      * @param address The server address or {@code null} for a local address
      * @param port The server port or {@code 0} to automatically allocate the port
@@ -232,12 +237,26 @@ public class FTPServer implements Closeable {
     }
 
     /**
-     * Called when a connection is created
+     * Creates a {@link FTPConnection} instance.
+     *
+     * Feel free to override this method with your own custom implementation
+     *
+     * @param socket The connection socket
+     * @return The {@link FTPConnection} instance
+     * @throws IOException When an error occurs
+     */
+    protected FTPConnection createConnection(Socket socket) throws IOException {
+        return new FTPConnection(this, socket, idleTimeout);
+    }
+
+    /**
+     * Called when a connection is created.
+     *
      * @param socket The connection socket
      * @throws IOException When an error occurs
      */
     protected void addConnection(Socket socket) throws IOException {
-        FTPConnection con = new FTPConnection(this, socket, idleTimeout);
+        FTPConnection con = createConnection(socket);
 
         synchronized(listeners) {
             for(IFTPListener l : listeners) {
@@ -266,7 +285,8 @@ public class FTPServer implements Closeable {
     }
 
     /**
-     * Starts disposing server resources
+     * Starts disposing server resources.
+     *
      * For a complete cleanup, use {@link #close()} instead
      */
     protected void dispose() {
@@ -289,6 +309,10 @@ public class FTPServer implements Closeable {
         }
     }
 
+    /**
+     * Stops the server and dispose its resources.
+     * @throws IOException
+     */
     @Override
     public void close() throws IOException {
         dispose();
