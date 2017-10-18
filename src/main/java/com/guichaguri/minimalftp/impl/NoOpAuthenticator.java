@@ -22,6 +22,7 @@ import com.guichaguri.minimalftp.api.IUserAuthenticator;
 
 /**
  * No Operation Authenticator
+ *
  * Allows any user in with a predefined file system
  * @author Guilherme Chaguri
  */

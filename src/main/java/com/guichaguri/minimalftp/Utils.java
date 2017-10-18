@@ -45,12 +45,17 @@ public class Utils {
     public static final int TYPE_WRITE = 1;
     public static final int TYPE_EXECUTE = 0;
 
+    // Time
     private static final SimpleDateFormat mdtmFormat = new SimpleDateFormat("YYYYMMddHHmmss", Locale.ENGLISH);
     private static final SimpleDateFormat hourFormat = new SimpleDateFormat("MMM dd HH:mm", Locale.ENGLISH);
     private static final SimpleDateFormat yearFormat = new SimpleDateFormat("MMM dd YYYY", Locale.ENGLISH);
     private static final long sixMonths = 183L * 24L * 60L * 60L * 1000L;
 
-    public static String toUnixTimestamp(long time) {
+    public static String toListTimestamp(long time) {
+        // Intended Format
+        // May 26 21:50
+        // Feb 12 2015
+
         Date date = new Date(time);
 
         if(System.currentTimeMillis() - time > sixMonths) {
@@ -79,11 +84,16 @@ public class Utils {
                 fs.getOwner(file),
                 fs.getGroup(file),
                 fs.getSize(file),
-                toUnixTimestamp(fs.getLastModified(file)),
+                toListTimestamp(fs.getLastModified(file)),
                 fs.getName(file));
     }
 
     public static <F> String getPermission(IFileSystem<F> fs, F file) {
+        // Intended Format
+        // -rw-rw-rw-
+        // -rwxrwxrwx
+        // drwxrwxrwx
+
         String perm = "";
         int perms = fs.getPermissions(file);
 
@@ -187,9 +197,9 @@ public class Utils {
         return (perms >> perm & 1) == 1;
     }
 
-    public static int setPermission(int perms, int perm, boolean b) {
+    public static int setPermission(int perms, int perm, boolean hasPermission) {
         perm = 1 << perm;
-        return b ? perms | perm : perms & ~perm;
+        return hasPermission ? perms | perm : perms & ~perm;
     }
 
     public static int fromOctal(String perm) {

@@ -105,8 +105,9 @@ public interface IFileSystem<F extends Object> {
     String getGroup(F file);
 
     /**
-     * Gets (or calculates) the hash digest of a file
-     * "MD5", "SHA-1" and "SHA-256" are required to be implemented
+     * Gets (or calculates) the hash digest of a file.
+     *
+     * The algorithms "MD5", "SHA-1" and "SHA-256" are required to be implemented
      *
      * @param file The file object
      * @param algorithm The digest algorithm
@@ -129,6 +130,7 @@ public interface IFileSystem<F extends Object> {
 
     /**
      * Gets the parent directory of a file.
+     *
      * This method should check for file access permissions
      *
      * @param file The file object
@@ -139,7 +141,8 @@ public interface IFileSystem<F extends Object> {
     F getParent(F file) throws IOException;
 
     /**
-     * Lists file names, including directories of a directory inside the file system
+     * Lists file names, including directories of a directory inside the file system.
+     *
      * This method should check for file access permissions
      *
      * @param dir The directory file object
@@ -149,7 +152,8 @@ public interface IFileSystem<F extends Object> {
     F[] listFiles(F dir) throws IOException;
 
     /**
-     * Finds a file based on the path
+     * Finds a file based on the path.
+     *
      * This method should check for file access permissions
      *
      * @param path The path
@@ -160,7 +164,8 @@ public interface IFileSystem<F extends Object> {
     F findFile(String path) throws IOException;
 
     /**
-     * Finds a file based on the path
+     * Finds a file based on the path.
+     *
      * This method should check for file access permissions
      *
      * @param cwd The base directory
@@ -181,7 +186,8 @@ public interface IFileSystem<F extends Object> {
     InputStream readFile(F file, long start) throws IOException;
 
     /**
-     * Writes a file into an output stream
+     * Writes a file into an output stream.
+     *
      * If the file does not exist, creates the file
      *
      * @param file The file object

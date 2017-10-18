@@ -22,6 +22,7 @@ import java.io.*;
 
 /**
  * Native File System
+ *
  * Allows the manipulation of any file inside a directory
  * @author Guilherme Chaguri
  */
@@ -31,6 +32,7 @@ public class NativeFileSystem implements IFileSystem<File> {
 
     /**
      * Creates a native file system.
+     *
      * If the root directory does not exists, it will be created
      * @param rootDir The root directory
      */
