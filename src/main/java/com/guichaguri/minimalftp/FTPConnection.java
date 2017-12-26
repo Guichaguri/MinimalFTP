@@ -560,16 +560,28 @@ public class FTPConnection implements Closeable {
      * Stops the connection, but does not removes it from the list.
      *
      * For a complete cleanup, use {@link #close()} instead
+     * @param close Whether it will close the connection
      * @throws IOException When an I/O error occurs
      */
-    protected void stop() throws IOException {
+    protected void stop(boolean close) throws IOException {
         if(!thread.isInterrupted()) {
             thread.interrupt();
         }
 
         conHandler.onDisconnected();
 
-        con.close();
+        if(close) con.close();
+    }
+
+    /**
+     * Interrupts and disposes the connection
+     * @param close Whether it will close the connection
+     * @throws IOException When an I/O error occurs
+     */
+    protected void close(boolean close) throws IOException {
+        stop(close);
+
+        server.removeConnection(this);
     }
 
     /**
@@ -578,9 +590,7 @@ public class FTPConnection implements Closeable {
      */
     @Override
     public void close() throws IOException {
-        stop();
-
-        server.removeConnection(this);
+        close(true);
     }
 
     /**
@@ -591,6 +601,12 @@ public class FTPConnection implements Closeable {
         public void run() {
             while(!con.isClosed()) {
                 update();
+            }
+
+            try {
+                close(false);
+            } catch(IOException ex) {
+                ex.printStackTrace();
             }
         }
     }

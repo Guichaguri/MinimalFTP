@@ -300,7 +300,7 @@ public class FTPServer implements Closeable {
         synchronized(connections) {
             for(FTPConnection con : connections) {
                 try {
-                    con.stop();
+                    con.stop(true);
                 } catch(Exception ex) {
                     ex.printStackTrace();
                 }

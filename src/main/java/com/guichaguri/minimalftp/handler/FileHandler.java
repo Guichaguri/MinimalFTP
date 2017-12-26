@@ -412,7 +412,7 @@ public class FileHandler {
             String hex = DatatypeConverter.printHexBinary(digest);
 
             // TODO RANG
-            con.sendResponse(213, hash + " 0-" + fs.getSize(file) + " " + hex + " " + fs.getName(file));
+            con.sendResponse(213, String.format("%s 0-%s %s %s", hash, fs.getSize(file), hex, fs.getName(file)));
         } catch(NoSuchAlgorithmException ex) {
             con.sendResponse(504, ex.getMessage());
         }

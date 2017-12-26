@@ -47,19 +47,19 @@ MinimalFTP is published on JCenter and Maven Central
 <dependency>
   <groupId>com.guichaguri</groupId>
   <artifactId>minimalftp</artifactId>
-  <version>1.0.4</version>
+  <version>1.0.5</version>
   <type>pom</type>
 </dependency>
 ```
 
 #### Gradle
 ```groovy
-compile 'com.guichaguri:minimalftp:1.0.4'
+compile 'com.guichaguri:minimalftp:1.0.5'
 ```
 
 #### Ivy
 ```xml
-<dependency org='com.guichaguri' name='minimalftp' rev='1.0.4'>
+<dependency org='com.guichaguri' name='minimalftp' rev='1.0.5'>
   <artifact name='minimalftp' ext='pom' />
 </dependency>
 ```
@@ -74,7 +74,7 @@ File root = new File(System.getProperty("user.dir"));
 // Creates a native file system
 NativeFileSystem fs = new NativeFileSystem(root);
 
-// Creates a noop authenticator
+// Creates a noop authenticator, which allows anonymous authentication
 NoOpAuthenticator auth = new NoOpAuthenticator(fs);
 
 // Creates the server with the authenticator
