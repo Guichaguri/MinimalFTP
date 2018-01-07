@@ -194,8 +194,12 @@ public class FTPConnection implements Closeable {
     public void sendResponse(int code, String response) {
         if(con.isClosed()) return;
 
+        if(response == null || response.isEmpty()) {
+            response = "Unknown";
+        }
+
         try {
-            if(!response.isEmpty() && response.charAt(0) == '-') {
+            if(response.charAt(0) == '-') {
                 writer.write(code + response + "\r\n");
             } else {
                 writer.write(code + " " + response + "\r\n");
