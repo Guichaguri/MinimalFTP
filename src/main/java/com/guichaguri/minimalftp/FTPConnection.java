@@ -63,6 +63,7 @@ public class FTPConnection implements Closeable {
     protected long bytesTransferred = 0;
     protected boolean responseSent = true;
     protected int timeout = 0;
+    protected int bufferSize = 0;
     protected long lastUpdate = 0;
 
     /**
@@ -73,15 +74,17 @@ public class FTPConnection implements Closeable {
      * @param server The server which received the connection
      * @param con The connection socket
      * @param idleTimeout The timeout in milliseconds
+     * @param bufferSize The buffer size in bytes
      * @throws IOException When an I/O error occurs
      */
-    public FTPConnection(FTPServer server, Socket con, int idleTimeout) throws IOException {
+    public FTPConnection(FTPServer server, Socket con, int idleTimeout, int bufferSize) throws IOException {
         this.server = server;
         this.con = con;
         this.reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
         this.writer = new BufferedWriter(new OutputStreamWriter(con.getOutputStream()));
 
         this.timeout = idleTimeout;
+        this.bufferSize = bufferSize;
         this.lastUpdate = System.currentTimeMillis();
         con.setSoTimeout(timeout);
 
@@ -102,6 +105,20 @@ public class FTPConnection implements Closeable {
         this.conHandler.registerCommands();
         this.fileHandler.registerCommands();
         this.conHandler.onConnected();
+    }
+
+    /**
+     * Creates a new FTP connection.
+     *
+     * @param server The server which received the connection
+     * @param con The connection socket
+     * @param idleTimeout The timeout in milliseconds
+     * @throws IOException When an I/O error occurs
+     * @deprecated Use {@link #FTPConnection(FTPServer, Socket, int, int)} instead
+     */
+    @Deprecated
+    public FTPConnection(FTPServer server, Socket con, int idleTimeout) throws IOException {
+        this(server, con, idleTimeout, 1024);
     }
 
     /**
@@ -255,7 +272,7 @@ public class FTPConnection implements Closeable {
             dataConnections.add(socket);
             OutputStream out = socket.getOutputStream();
 
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[bufferSize];
             int len;
             while((len = in.read(buffer)) != -1) {
                 Utils.write(out, buffer, len, conHandler.isAsciiMode());
@@ -290,7 +307,7 @@ public class FTPConnection implements Closeable {
             dataConnections.add(socket);
             InputStream in = socket.getInputStream();
 
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[bufferSize];
             int len;
             while((len = in.read(buffer)) != -1) {
                 out.write(buffer, 0, len);

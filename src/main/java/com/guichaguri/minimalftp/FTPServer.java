@@ -40,6 +40,7 @@ public class FTPServer implements Closeable {
 
     protected IUserAuthenticator auth = null;
     protected int idleTimeout = 5 * 60 * 1000; // 5 minutes
+    protected int bufferSize = 1024;
     protected SSLContext ssl = null;
     protected boolean explicitSecurity = true;
 
@@ -146,6 +147,17 @@ public class FTPServer implements Closeable {
     }
 
     /**
+     * Sets the default buffer size in bytes
+     *
+     * The default value is 1024 bytes
+     *
+     * @param bufferSize The buffer size in bytes
+     */
+    public void setBufferSize(int bufferSize) {
+        this.bufferSize = bufferSize;
+    }
+
+    /**
      * Adds an {@link IFTPListener} to the server
      * @param listener The listener instance
      */
@@ -246,7 +258,7 @@ public class FTPServer implements Closeable {
      * @throws IOException When an error occurs
      */
     protected FTPConnection createConnection(Socket socket) throws IOException {
-        return new FTPConnection(this, socket, idleTimeout);
+        return new FTPConnection(this, socket, idleTimeout, bufferSize);
     }
 
     /**
@@ -311,7 +323,7 @@ public class FTPServer implements Closeable {
 
     /**
      * Stops the server and dispose its resources.
-     * @throws IOException
+     * @throws IOException When an I/O error occurs
      */
     @Override
     public void close() throws IOException {

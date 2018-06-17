@@ -32,6 +32,9 @@ public class CustomServer implements IFTPListener {
         // Changes the timeout to 10 minutes
         server.setTimeout(10 * 60 * 1000); // 10 minutes
 
+        // Changes the buffer size
+        server.setBufferSize(1024 * 5); // 5 kilobytes
+
         // Start it synchronously in our localhost and in the port 21
         server.listenSync(InetAddress.getByName("localhost"), 21);
     }
