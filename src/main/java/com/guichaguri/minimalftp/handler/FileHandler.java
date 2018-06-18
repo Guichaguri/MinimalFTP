@@ -92,6 +92,7 @@ public class FileHandler {
         con.registerCommand("MFMT", "MFMT <time> <file>", this::mfmt); // Change Modified Time (draft-somers-ftp-mfxx-04)
 
         con.registerCommand("MD5", "MD5 <file>", this::md5); // MD5 Digest (draft-twine-ftpmd5-00) (Obsolete)
+        con.registerCommand("MMD5", "MMD5 <file1, file2, ...>", this::mmd5); // MD5 Digest (draft-twine-ftpmd5-00) (Obsolete)
 
         con.registerCommand("HASH", "HASH <file>", this::hash); // Hash Digest (draft-bryan-ftpext-hash-02)
 
@@ -392,12 +393,47 @@ public class FileHandler {
     }
 
     private void md5(String path) throws IOException {
+        String p = path = path.trim();
+
+        if(p.length() > 2 && p.startsWith("\"") && p.endsWith("\"")) {
+            // Remove the quotes
+            p = p.substring(1, p.length() - 1).trim();
+        }
+
         try {
-            Object file = getFile(path);
+            Object file = getFile(p);
             byte[] digest = fs.getDigest(file, "MD5");
             String md5 = DatatypeConverter.printHexBinary(digest);
 
-            con.sendResponse(251, fs.getName(file) + " " + md5);
+            con.sendResponse(251, path + " " + md5);
+        } catch(NoSuchAlgorithmException ex) {
+            // Shouldn't ever happen
+            con.sendResponse(504, ex.getMessage());
+        }
+    }
+
+    private void mmd5(String args) throws IOException {
+        String[] paths = args.split(",");
+        StringBuilder response = new StringBuilder();
+
+        try {
+            for(String path : paths) {
+                String p = path = path.trim();
+
+                if(p.length() > 2 && p.startsWith("\"") && p.endsWith("\"")) {
+                    // Remove the quotes
+                    p = p.substring(1, p.length() - 1).trim();
+                }
+
+                Object file = getFile(p);
+                byte[] digest = fs.getDigest(file, "MD5");
+                String md5 = DatatypeConverter.printHexBinary(digest);
+
+                if(response.length() > 0) response.append(", ");
+                response.append(path).append(" ").append(md5);
+            }
+
+            con.sendResponse(paths.length == 1 ? 251 : 252, response.toString());
         } catch(NoSuchAlgorithmException ex) {
             // Shouldn't ever happen
             con.sendResponse(504, ex.getMessage());
