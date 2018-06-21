@@ -5,6 +5,7 @@ import com.guichaguri.minimalftp.api.IFileSystem;
 import com.guichaguri.minimalftp.api.IUserAuthenticator;
 import com.guichaguri.minimalftp.impl.NativeFileSystem;
 import java.io.File;
+import java.net.InetAddress;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -37,12 +38,12 @@ public class UserbaseAuthenticator implements IUserAuthenticator {
     }
 
     @Override
-    public boolean needsPassword(FTPConnection con, String username) {
+    public boolean needsPassword(FTPConnection con, String username, InetAddress address) {
         return true;
     }
 
     @Override
-    public IFileSystem authenticate(FTPConnection con, String username, String password) throws AuthException {
+    public IFileSystem authenticate(FTPConnection con, InetAddress address, String username, String password) throws AuthException {
         // Check for a user with that username in the database
         if(!userbase.containsKey(username)) {
             throw new AuthException();

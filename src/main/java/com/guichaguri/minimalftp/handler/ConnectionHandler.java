@@ -20,10 +20,12 @@ import com.guichaguri.minimalftp.FTPConnection;
 import com.guichaguri.minimalftp.FTPServer;
 import com.guichaguri.minimalftp.Utils;
 import com.guichaguri.minimalftp.api.IUserAuthenticator;
+import com.guichaguri.minimalftp.api.IUserAuthenticator.AuthException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -36,6 +38,7 @@ public class ConnectionHandler {
 
     private final FTPConnection con;
 
+    private InetAddress address = null;
     private boolean authenticated = false;
     private String username = null;
 
@@ -129,6 +132,8 @@ public class ConnectionHandler {
         con.registerCommand("EPSV", "EPSV", this::epsv); // Extended Passive Mode (RFC 2428)
         con.registerCommand("EPRT", "EPRT <address>", this::eprt); // Extended Active Mode (RFC 2428)
 
+        con.registerCommand("HOST", "HOST <address>", this::host, false); // Custom Virtual Hosts (RFC 7151)
+
         con.registerFeature("base"); // Base Commands (RFC 5797)
         con.registerFeature("secu"); // Security Commands (RFC 5797)
         con.registerFeature("hist"); // Obsolete Commands (RFC 5797)
@@ -139,6 +144,7 @@ public class ConnectionHandler {
         con.registerFeature("PROT"); // Protection Level (RFC 2228)
         con.registerFeature("EPSV"); // Extended Passive Mode (RFC 2428)
         con.registerFeature("EPRT"); // Extended Active Mode (RFC 2428)
+        con.registerFeature("HOST"); // Custom Virtual Hosts (RFC 7151)
     }
 
     private void noop() {
@@ -191,6 +197,28 @@ public class ConnectionHandler {
         }
     }
 
+    private void host(String host) throws IOException {
+        if(authenticated) {
+            con.sendResponse(503, "The user is already authenticated");
+            return;
+        }
+
+        try {
+            IUserAuthenticator auth = con.getServer().getAuthenticator();
+            InetAddress address = InetAddress.getByName(host);
+
+            if(auth.acceptsHost(con, address)) {
+                this.address = address;
+                con.sendResponse(220, "Host accepted");
+            } else {
+                this.address = null;
+                con.sendResponse(504, "Host denied");
+            }
+        } catch(UnknownHostException ex) {
+            con.sendResponse(501, "Invalid host");
+        }
+    }
+
     private void user(String username) throws IOException {
         if(authenticated) {
             con.sendResponse(230, "Logged in!");
@@ -200,7 +228,7 @@ public class ConnectionHandler {
         this.username = username;
 
         IUserAuthenticator auth = con.getServer().getAuthenticator();
-        if(auth.needsPassword(con, username)) {
+        if(auth.needsPassword(con, username, address)) {
             // Requests a password for the authentication
             con.sendResponse(331, "Needs a password");
         } else {
@@ -257,6 +285,7 @@ public class ConnectionHandler {
     private void rein() {
         authenticated = false;
         username = null;
+        address = null;
         con.sendResponse(220, "Ready for a new user");
     }
 
@@ -444,10 +473,13 @@ public class ConnectionHandler {
 
     private boolean authenticate(IUserAuthenticator auth, String password) {
         try {
-            con.setFileSystem(auth.authenticate(con, username, password));
+            con.setFileSystem(auth.authenticate(con, address, username, password));
             authenticated = true;
             return true;
+        } catch(AuthException ex) {
+            return false;
         } catch(Exception ex) {
+            ex.printStackTrace();
             return false;
         }
     }

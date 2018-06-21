@@ -19,6 +19,7 @@ package com.guichaguri.minimalftp.impl;
 import com.guichaguri.minimalftp.FTPConnection;
 import com.guichaguri.minimalftp.api.IFileSystem;
 import com.guichaguri.minimalftp.api.IUserAuthenticator;
+import java.net.InetAddress;
 
 /**
  * No Operation Authenticator
@@ -45,12 +46,12 @@ public class NoOpAuthenticator implements IUserAuthenticator {
     }
 
     @Override
-    public boolean needsPassword(FTPConnection con, String username) {
+    public boolean needsPassword(FTPConnection con, String username, InetAddress address) {
         return false;
     }
 
     @Override
-    public IFileSystem authenticate(FTPConnection con, String username, String password) throws AuthException {
+    public IFileSystem authenticate(FTPConnection con, InetAddress address, String username, String password) throws AuthException {
         return fs;
     }
 }

@@ -6,7 +6,7 @@ Although it's named "minimal", it supports a bunch of features:
 
 * 100% Java, no libraries
 * Lightweight
-* Supports 55 FTP commands
+* Supports 57 FTP commands
 * TLS/SSL support
 * Custom File System support
 * Custom User Authentication support
@@ -31,7 +31,7 @@ The required minimum implementation is already done, however, there are still co
 * [RFC 3659](https://tools.ietf.org/html/rfc3659) - Extensions to FTP (4/4)
 * [RFC 4217](https://tools.ietf.org/html/rfc4217) - Securing FTP with TLS
 * [RFC 5797](https://tools.ietf.org/html/rfc5797) - FTP Command and Extension Registry
-* [RFC 7151](https://tools.ietf.org/html/rfc7151) - File Transfer Protocol HOST Command for Virtual Hosts (0/1)
+* [RFC 7151](https://tools.ietf.org/html/rfc7151) - File Transfer Protocol HOST Command for Virtual Hosts (1/1)
 * [draft-twine-ftpmd5-00](https://tools.ietf.org/html/draft-twine-ftpmd5-00) - The "MD5" and "MMD5" FTP Command Extensions (2/2) (Obsolete)
 * [draft-somers-ftp-mfxx-04](https://tools.ietf.org/html/draft-somers-ftp-mfxx-04) - The "MFMT", "MFCT", and "MFF" Command Extensions for FTP (1/3)
 * [draft-bryan-ftpext-hash-02](https://tools.ietf.org/html/draft-bryan-ftpext-hash-02) - File Transfer Protocol HASH Command for Cryptographic Hashes (1/1)
