@@ -200,9 +200,13 @@ public class NativeFileSystem implements IFileSystem<File> {
 
     @Override
     public void chmod(File file, int perms) throws IOException {
-        file.setReadable(Utils.hasPermission(perms, Utils.CAT_OWNER + Utils.TYPE_READ), true);
-        file.setWritable(Utils.hasPermission(perms, Utils.CAT_OWNER + Utils.TYPE_WRITE), true);
-        file.setExecutable(Utils.hasPermission(perms, Utils.CAT_OWNER + Utils.TYPE_EXECUTE), true);
+        boolean read = Utils.hasPermission(perms, Utils.CAT_OWNER + Utils.TYPE_READ);
+        boolean write = Utils.hasPermission(perms, Utils.CAT_OWNER + Utils.TYPE_WRITE);
+        boolean execute = Utils.hasPermission(perms, Utils.CAT_OWNER + Utils.TYPE_EXECUTE);
+
+        if(!file.setReadable(read, true)) throw new IOException("Couldn't update the readable permission");
+        if(!file.setWritable(write, true)) throw new IOException("Couldn't update the writable permission");
+        if(!file.setExecutable(execute, true)) throw new IOException("Couldn't update the executable permission");
     }
 
     @Override
