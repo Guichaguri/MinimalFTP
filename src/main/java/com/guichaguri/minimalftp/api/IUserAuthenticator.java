@@ -33,6 +33,7 @@ public interface IUserAuthenticator {
      * The client will not send the host address if {@link #needsUsername(FTPConnection)} returns {@code false}
      * or the client does not support custom hosts.
      *
+     * @param con The FTP connection
      * @param host The host address
      * @return Whether the specified host is accepted
      */
@@ -65,7 +66,7 @@ public interface IUserAuthenticator {
      *
      * You can use a custom file system depending on the user.
      *
-     * If the {@param host} is {@code null}, you can use a "default host" or a union of all hosts combined
+     * If the {@code host} is {@code null}, you can use a "default host" or a union of all hosts combined
      * as some clients might not support custom hosts.
      *
      * @param con The FTP connection
