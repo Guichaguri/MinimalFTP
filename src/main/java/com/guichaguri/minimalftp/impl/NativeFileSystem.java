@@ -16,9 +16,12 @@
 
 package com.guichaguri.minimalftp.impl;
 
-import com.guichaguri.minimalftp.api.IFileSystem;
 import com.guichaguri.minimalftp.Utils;
+import com.guichaguri.minimalftp.api.IFileSystem;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
 
 /**
  * Native File System
@@ -190,7 +193,15 @@ public class NativeFileSystem implements IFileSystem<File> {
 
     @Override
     public void delete(File file) throws IOException {
-        if(!file.delete()) throw new IOException("Couldn't delete the file");
+        if(file.isDirectory()) {
+            Files.walk(file.toPath()) // Walks through all files, except links
+                .sorted(Comparator.reverseOrder()) // Reverse order, so it deletes from the highest depth to the lowest one
+                .map(Path::toFile) // Converts the Path objects to File objects
+                .forEach(File::delete); // Deletes it
+        } else {
+            // Deletes a single file
+            if(!file.delete()) throw new IOException("Couldn't delete the file");
+        }
     }
 
     @Override
