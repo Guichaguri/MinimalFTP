@@ -23,10 +23,10 @@ import com.guichaguri.minimalftp.api.ResponseException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.UUID;
-import javax.xml.bind.DatatypeConverter;
 
 /**
  * Handles file management commands
@@ -403,7 +403,7 @@ public class FileHandler {
         try {
             Object file = getFile(p);
             byte[] digest = fs.getDigest(file, "MD5");
-            String md5 = DatatypeConverter.printHexBinary(digest);
+            String md5 = new BigInteger(1, digest).toString(16);
 
             con.sendResponse(251, path + " " + md5);
         } catch(NoSuchAlgorithmException ex) {
@@ -427,7 +427,7 @@ public class FileHandler {
 
                 Object file = getFile(p);
                 byte[] digest = fs.getDigest(file, "MD5");
-                String md5 = DatatypeConverter.printHexBinary(digest);
+                String md5 = new BigInteger(1, digest).toString(16);
 
                 if(response.length() > 0) response.append(", ");
                 response.append(path).append(" ").append(md5);
@@ -445,7 +445,7 @@ public class FileHandler {
             Object file = getFile(path);
             String hash = con.getOption("HASH");
             byte[] digest = fs.getDigest(file, hash);
-            String hex = DatatypeConverter.printHexBinary(digest);
+            String hex = new BigInteger(1, digest).toString(16);
 
             // TODO RANG
             con.sendResponse(213, String.format("%s 0-%s %s %s", hash, fs.getSize(file), hex, fs.getName(file)));
