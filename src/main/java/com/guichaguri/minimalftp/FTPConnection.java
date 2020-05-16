@@ -563,6 +563,9 @@ public class FTPConnection implements Closeable {
                 Utils.closeQuietly(this);
             }
             return;
+        } catch(SocketException e) {
+            Utils.closeQuietly(this);
+            return;
         } catch(IOException ex) {
             return;
         }
