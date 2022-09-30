@@ -233,7 +233,7 @@ public class FileHandler {
         // "-l" is not present in any specification, but chrome uses it
         // TODO remove this when the bug gets fixed
         // https://bugs.chromium.org/p/chromium/issues/detail?id=706905
-        Object dir = args.length > 0 && !args[0].equals("-l") ? getFile(args[0]) : cwd;
+        Object dir = args.length > 0 && !args[0].equals("-l") && !args[0].equals("-a") ? getFile(args[0]) : cwd;
 
         if(!fs.isDirectory(dir)) {
             con.sendResponse(550, "Not a directory");
