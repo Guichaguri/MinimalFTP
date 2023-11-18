@@ -349,12 +349,30 @@ public class FTPConnection implements Closeable {
     }
 
     /**
+     * Unregisters a feature line from the FEAT command.
+     *
+     * @param feat
+     */
+    public void unregisterFeature(String feat) {
+        features.remove(feat);
+    }
+
+    /**
      * Registers an option for the OPTS command
      * @param option The option name
      * @param value The default value
      */
     public void registerOption(String option, String value) {
         options.put(option.toUpperCase(), value);
+    }
+
+    /**
+     * Unregisters an option from the OPTS command
+     *
+     * @param option The option name
+     */
+    public void unregisterOption(String option) {
+        options.remove(option);
     }
 
     /**
@@ -402,6 +420,10 @@ public class FTPConnection implements Closeable {
         addCommand(label, help, cmd, needsAuth);
     }
 
+    public void unregisterCommand(String label) {
+        removeCommand(label);
+    }
+
     /**
      * Internally registers a SITE sub-command
      * @param label The command name
@@ -421,6 +443,15 @@ public class FTPConnection implements Closeable {
      */
     protected void addCommand(String label, String help, Command cmd, boolean needsAuth) {
         commands.put(label.toUpperCase(), new CommandInfo(cmd, help, needsAuth));
+    }
+
+    /**
+     * Removes a registered command.
+     *
+     * @param label The command name
+     */
+    protected void removeCommand(String label) {
+        commands.remove(label.toUpperCase());
     }
 
     /**
