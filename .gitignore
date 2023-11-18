@@ -3,7 +3,4 @@
 build/
 run/
 out/
-gradle/
-gradlew
-gradlew.bat
 publish.properties
