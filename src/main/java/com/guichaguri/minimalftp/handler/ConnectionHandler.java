@@ -107,6 +107,8 @@ public class ConnectionHandler {
     }
 
     public void registerCommands() {
+        boolean passiveAvailable = con.getServer().getPassiveModeEnabled();
+
         con.registerCommand("NOOP", "NOOP", this::noop, false); // Ping
         con.registerCommand("HELP", "HELP <command>", this::help, false); // Command Help
         con.registerCommand("QUIT", "QUIT", this::quit, false); // Quit
@@ -115,7 +117,7 @@ public class ConnectionHandler {
         con.registerCommand("PASS", "PASS <password>", this::pass, false); // Set Password
         con.registerCommand("ACCT", "ACCT <info>", this::acct, false); // Account Info
         con.registerCommand("SYST", "SYST", this::syst); // System Information
-        con.registerCommand("PASV", "PASV", this::pasv); // Passive Mode
+        if (passiveAvailable) con.registerCommand("PASV", "PASV", this::pasv); // Passive Mode
         con.registerCommand("PORT", "PORT <address>", this::port); // Active Mode
         con.registerCommand("TYPE", "TYPE <type>", this::type); // Binary Flag
         con.registerCommand("STRU", "STRU <type>", this::stru); // Structure Type
@@ -126,10 +128,10 @@ public class ConnectionHandler {
         con.registerCommand("PBSZ", "PBSZ <size>", this::pbsz, false); // Protection Buffer Size (RFC 2228)
         con.registerCommand("PROT", "PROT <level>", this::prot, false); // Data Channel Protection Level (RFC 2228)
 
-        con.registerCommand("LPSV", "LPSV", this::lpsv); // Long Passive Mode (RFC 1639) (Obsolete)
+        if (passiveAvailable) con.registerCommand("LPSV", "LPSV", this::lpsv); // Long Passive Mode (RFC 1639) (Obsolete)
         con.registerCommand("LPRT", "LPRT <address>", this::lprt); // Long Active Mode (RFC 1639) (Obsolete)
 
-        con.registerCommand("EPSV", "EPSV", this::epsv); // Extended Passive Mode (RFC 2428)
+        if (passiveAvailable) con.registerCommand("EPSV", "EPSV", this::epsv); // Extended Passive Mode (RFC 2428)
         con.registerCommand("EPRT", "EPRT <address>", this::eprt); // Extended Active Mode (RFC 2428)
 
         con.registerCommand("HOST", "HOST <address>", this::host, false); // Custom Virtual Hosts (RFC 7151)
@@ -142,7 +144,7 @@ public class ConnectionHandler {
         con.registerFeature("AUTH TLS"); // SSL/TLS support (RFC 4217)
         con.registerFeature("PBSZ"); // Protection Buffer Size (RFC 2228)
         con.registerFeature("PROT"); // Protection Level (RFC 2228)
-        con.registerFeature("EPSV"); // Extended Passive Mode (RFC 2428)
+        if (passiveAvailable) con.registerFeature("EPSV"); // Extended Passive Mode (RFC 2428)
         con.registerFeature("EPRT"); // Extended Active Mode (RFC 2428)
         con.registerFeature("HOST"); // Custom Virtual Hosts (RFC 7151)
     }

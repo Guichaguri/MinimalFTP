@@ -43,6 +43,7 @@ public class FTPServer implements Closeable {
     protected int bufferSize = 1024;
     protected SSLContext ssl = null;
     protected boolean explicitSecurity = true;
+    protected boolean passiveModeEnabled = true;
 
     protected ServerSocket socket = null;
     protected ServerThread serverThread = null;
@@ -120,6 +121,15 @@ public class FTPServer implements Closeable {
     }
 
     /**
+     * Gets whether the security will be explicit.
+     *
+     * @return {@code true} supports both secure and insecure connections, {@code false} only supports secure connections
+     */
+    public boolean getExplicitSSL() {
+        return explicitSecurity;
+    }
+
+    /**
      * Sets whether the security will be explicit or implicit.
      *
      * A server in explicit mode will support both secure and insecure connections.
@@ -131,6 +141,31 @@ public class FTPServer implements Closeable {
      */
     public void setExplicitSSL(boolean explicit) {
         this.explicitSecurity = explicit;
+    }
+
+    /**
+     * Gets whether the passive mode is available for clients.
+     *
+     * @return {@code true} supports both passive and active modes, {@code false} only supports the active mode
+     */
+    public boolean getPassiveModeEnabled() {
+        return passiveModeEnabled;
+    }
+
+    /**
+     * Sets whether the passive mode is available.
+     *
+     * The passive mode creates a data server in the ephemeral port range for connections.
+     * Although this mode allocates more ports, this is the most common FTP connection flow.
+     *
+     * Disabling this option only allows the "active mode", which requires the client to create the data server.
+     *
+     * Changing this option only affects new connections.
+     *
+     * @param available {@code true} to support both the active and passive modes, {@code false} to support only the active mode
+     */
+    public void setPassiveModeEnabled(boolean available) {
+        this.passiveModeEnabled = available;
     }
 
     /**
