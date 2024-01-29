@@ -46,9 +46,9 @@ public class Utils {
     public static final int TYPE_EXECUTE = 0;
 
     // Time
-    private static final SimpleDateFormat mdtmFormat = new SimpleDateFormat("YYYYMMddHHmmss", Locale.ENGLISH);
+    private static final SimpleDateFormat mdtmFormat = new SimpleDateFormat("yyyyMMddHHmmss", Locale.ENGLISH);
     private static final SimpleDateFormat hourFormat = new SimpleDateFormat("MMM dd HH:mm", Locale.ENGLISH);
-    private static final SimpleDateFormat yearFormat = new SimpleDateFormat("MMM dd YYYY", Locale.ENGLISH);
+    private static final SimpleDateFormat yearFormat = new SimpleDateFormat("MMM dd yyyy", Locale.ENGLISH);
     private static final long sixMonths = 183L * 24L * 60L * 60L * 1000L;
 
     public static String toListTimestamp(long time) {
