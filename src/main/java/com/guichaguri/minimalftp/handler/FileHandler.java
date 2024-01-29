@@ -230,10 +230,17 @@ public class FileHandler {
     private void list(String[] args) throws IOException {
         con.sendResponse(150, "Sending file list...");
 
+        Object dir = cwd;
+
         // "-l" is not present in any specification, but chrome uses it
         // TODO remove this when the bug gets fixed
         // https://bugs.chromium.org/p/chromium/issues/detail?id=706905
-        Object dir = args.length > 0 && !args[0].equals("-l") && !args[0].equals("-a") ? getFile(args[0]) : cwd;
+        for (String arg : args) {
+            if (!arg.equals("-l") && !arg.equals("-a")) {
+                dir = getFile(arg);
+                break;
+            }
+        }
 
         if(!fs.isDirectory(dir)) {
             con.sendResponse(550, "Not a directory");
@@ -253,10 +260,17 @@ public class FileHandler {
     private void nlst(String[] args) throws IOException {
         con.sendResponse(150, "Sending file list...");
 
+        Object dir = cwd;
+
         // "-l" is not present in any specification, but chrome uses it
         // TODO remove this when the bug gets fixed
         // https://bugs.chromium.org/p/chromium/issues/detail?id=706905
-        Object dir = args.length > 0 && !args[0].equals("-l") ? getFile(args[0]) : cwd;
+        for (String arg : args) {
+            if (!arg.equals("-l") && !arg.equals("-a")) {
+                dir = getFile(arg);
+                break;
+            }
+        }
 
         if(!fs.isDirectory(dir)) {
             con.sendResponse(550, "Not a directory");
