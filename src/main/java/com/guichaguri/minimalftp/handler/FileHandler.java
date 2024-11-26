@@ -32,7 +32,7 @@ import java.util.UUID;
  * Handles file management commands
  * @author Guilherme Chaguri
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class FileHandler {
 
     private final FTPConnection con;
@@ -169,9 +169,10 @@ public class FileHandler {
     private void stor(String path) throws IOException {
         Object file = getFile(path);
 
+        OutputStream fileStream = fs.writeFile(file, start);
         con.sendResponse(150, "Receiving a file stream for " + path);
 
-        receiveStream(fs.writeFile(file, start));
+        receiveStream(fileStream);
         start = 0;
     }
 
@@ -193,22 +194,24 @@ public class FileHandler {
             file = fs.findFile(cwd, name + ext);
         }
 
+        OutputStream outputStream = fs.writeFile(file, 0);
         con.sendResponse(150, "File: " + fs.getPath(file));
-        receiveStream(fs.writeFile(file, 0));
+        receiveStream(outputStream);
     }
 
     private void appe(String path) throws IOException {
         Object file = getFile(path);
-
+        OutputStream outputStream = fs.writeFile(file, fs.exists(file) ? fs.getSize(file) : 0);
         con.sendResponse(150, "Receiving a file stream for " + path);
-        receiveStream(fs.writeFile(file, fs.exists(file) ? fs.getSize(file) : 0));
+        receiveStream(outputStream);
     }
 
     private void retr(String path) throws IOException {
         Object file = getFile(path);
 
+        InputStream inputStream = Utils.readFileSystem(fs, file, start, con.isAsciiMode());
         con.sendResponse(150, "Sending the file stream for " + path + " (" + fs.getSize(file) + " bytes)");
-        sendStream(Utils.readFileSystem(fs, file, start, con.isAsciiMode()));
+        sendStream(inputStream);
         start = 0;
     }
 
@@ -249,8 +252,13 @@ public class FileHandler {
 
         StringBuilder data = new StringBuilder();
 
-        for(Object file : fs.listFiles(dir)) {
-            data.append(Utils.format(fs, file));
+        // Listing files may return null if I/O errors occurred
+        // Check for null before iterating to avoid NullPointerException
+        Object[] files = fs.listFiles(dir);
+        if (files != null) {
+            for (Object file : files) {
+                data.append(Utils.format(fs, file));
+            }
         }
 
         con.sendData(data.toString().getBytes("UTF-8"));
@@ -279,8 +287,13 @@ public class FileHandler {
 
         StringBuilder data = new StringBuilder();
 
-        for(Object file : fs.listFiles(dir)) {
-            data.append(fs.getName(file)).append("\r\n");
+        // Listing files may return null if I/O Errors occurred
+        // Check for null before iterating to avoid NullPointerException
+        Object[] files = fs.listFiles(dir);
+        if (files != null) {
+            for (Object file : files) {
+                data.append(fs.getName(file)).append("\r\n");
+            }
         }
 
         con.sendData(data.toString().getBytes("UTF-8"));
@@ -368,13 +381,19 @@ public class FileHandler {
             return;
         }
 
+        // Listing files may return null if I/O errors occurred
+        // Check for null before iterating to avoid NullPointerException
+        Object[] files = fs.listFiles(file);
+
         con.sendResponse(150, "Sending file information list...");
 
         String[] options = con.getOption("MLST").split(";");
         StringBuilder data = new StringBuilder();
 
-        for(Object f : fs.listFiles(file)) {
-            data.append(Utils.getFacts(fs, f, options));
+        if (files != null) {
+            for(Object f : files) {
+                data.append(Utils.getFacts(fs, f, options));
+            }
         }
 
         con.sendData(data.toString().getBytes("UTF-8"));
@@ -443,7 +462,7 @@ public class FileHandler {
                 byte[] digest = fs.getDigest(file, "MD5");
                 String md5 = new BigInteger(1, digest).toString(16);
 
-                if(response.length() > 0) response.append(", ");
+                if(!response.isEmpty()) response.append(", ");
                 response.append(path).append(" ").append(md5);
             }
 
