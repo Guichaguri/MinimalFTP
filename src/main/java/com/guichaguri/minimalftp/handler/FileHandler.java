@@ -169,9 +169,10 @@ public class FileHandler {
     private void stor(String path) throws IOException {
         Object file = getFile(path);
 
+        OutputStream fileStream = fs.writeFile(file, start);
         con.sendResponse(150, "Receiving a file stream for " + path);
 
-        receiveStream(fs.writeFile(file, start));
+        receiveStream(fileStream);
         start = 0;
     }
 
@@ -193,22 +194,24 @@ public class FileHandler {
             file = fs.findFile(cwd, name + ext);
         }
 
+        OutputStream outputStream = fs.writeFile(file, 0);
         con.sendResponse(150, "File: " + fs.getPath(file));
-        receiveStream(fs.writeFile(file, 0));
+        receiveStream(outputStream);
     }
 
     private void appe(String path) throws IOException {
         Object file = getFile(path);
-
+        OutputStream outputStream = fs.writeFile(file, fs.exists(file) ? fs.getSize(file) : 0);
         con.sendResponse(150, "Receiving a file stream for " + path);
-        receiveStream(fs.writeFile(file, fs.exists(file) ? fs.getSize(file) : 0));
+        receiveStream(outputStream);
     }
 
     private void retr(String path) throws IOException {
         Object file = getFile(path);
 
+        InputStream inputStream = Utils.readFileSystem(fs, file, start, con.isAsciiMode());
         con.sendResponse(150, "Sending the file stream for " + path + " (" + fs.getSize(file) + " bytes)");
-        sendStream(Utils.readFileSystem(fs, file, start, con.isAsciiMode()));
+        sendStream(inputStream);
         start = 0;
     }
 
