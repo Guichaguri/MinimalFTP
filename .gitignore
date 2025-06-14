@@ -1,6 +1,12 @@
+# Build Output
+
 .gradle/
 .idea/
 build/
 run/
 out/
-publish.properties
+
+# Signing Info
+
+gradle.properties
+secring.gpg

@@ -1,4 +1,4 @@
-# MinimalFTP [![Build Status](https://travis-ci.org/Guichaguri/MinimalFTP.svg?branch=master)](https://travis-ci.org/Guichaguri/MinimalFTP)
+# MinimalFTP
 A lightweight, simple FTP server. Pure Java, no libraries.
 
 ## Features
@@ -47,19 +47,19 @@ MinimalFTP is published on JCenter and Maven Central
 <dependency>
   <groupId>com.guichaguri</groupId>
   <artifactId>minimalftp</artifactId>
-  <version>1.0.6</version>
+  <version>1.0.7</version>
   <type>pom</type>
 </dependency>
 ```
 
 #### Gradle
 ```groovy
-compile 'com.guichaguri:minimalftp:1.0.6'
+compile 'com.guichaguri:minimalftp:1.0.7'
 ```
 
 #### Ivy
 ```xml
-<dependency org='com.guichaguri' name='minimalftp' rev='1.0.6'>
+<dependency org='com.guichaguri' name='minimalftp' rev='1.0.7'>
   <artifact name='minimalftp' ext='pom' />
 </dependency>
 ```

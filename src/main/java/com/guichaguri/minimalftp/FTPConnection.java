@@ -350,8 +350,7 @@ public class FTPConnection implements Closeable {
 
     /**
      * Unregisters a feature line from the FEAT command.
-     *
-     * @param feat
+     * @param feat The feature name
      */
     public void unregisterFeature(String feat) {
         features.remove(feat);
