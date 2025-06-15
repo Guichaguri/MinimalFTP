@@ -117,15 +117,17 @@ public interface IFileSystem<F extends Object> {
      */
     default byte[] getDigest(F file, String algorithm) throws IOException, NoSuchAlgorithmException {
         MessageDigest d = MessageDigest.getInstance(algorithm);
-        InputStream in = readFile(file, 0);
-        byte[] bytes = new byte[1024];
-        int length;
 
-        while((length = in.read(bytes)) != -1) {
-            d.update(bytes, 0, length);
+        try (InputStream in = readFile(file, 0)) {
+            byte[] bytes = new byte[1024];
+            int length;
+
+            while ((length = in.read(bytes)) != -1) {
+                d.update(bytes, 0, length);
+            }
+
+            return d.digest();
         }
-
-        return d.digest();
     }
 
     /**
