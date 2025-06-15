@@ -618,13 +618,13 @@ public class FTPConnection implements Closeable {
      * @throws IOException When an I/O error occurs
      */
     protected void stop(boolean close) throws IOException {
-        if(!thread.isInterrupted()) {
-            thread.interrupt();
-        }
-
         conHandler.onDisconnected();
 
         if(close) con.close();
+
+        if(!thread.isInterrupted()) {
+            thread.interrupt();
+        }
     }
 
     /**
