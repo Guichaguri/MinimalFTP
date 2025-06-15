@@ -26,6 +26,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -99,7 +100,7 @@ public class ConnectionHandler {
         }
     }
 
-    public void onDisconnected() throws IOException {
+    public void onDisconnected() {
         if(passiveServer != null) {
             Utils.closeQuietly(passiveServer);
             passiveServer = null;
@@ -343,7 +344,7 @@ public class ConnectionHandler {
         data += "Logged in " + user + "\r\n";
         data += "TYPE: " + type + ", STRUcture: File, MODE: Stream\r\n";
         data += "Total bytes transferred for session: " + con.getBytesTransferred() + "\r\n";
-        con.sendData(data.getBytes("UTF-8"));
+        con.sendData(data.getBytes(StandardCharsets.UTF_8));
 
         con.sendResponse(211, "Status sent!");
     }

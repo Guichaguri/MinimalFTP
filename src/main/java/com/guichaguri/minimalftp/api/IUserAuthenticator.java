@@ -20,7 +20,7 @@ import com.guichaguri.minimalftp.FTPConnection;
 import java.net.InetAddress;
 
 /**
- * Represents an user authenticator.
+ * Represents a user authenticator.
  * You can implement your existing user database
  *
  * @author Guilherme Chaguri

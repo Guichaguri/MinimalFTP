@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.UUID;
@@ -32,12 +33,11 @@ import java.util.UUID;
  * Handles file management commands
  * @author Guilherme Chaguri
  */
-@SuppressWarnings("unchecked")
 public class FileHandler {
 
     private final FTPConnection con;
 
-    private IFileSystem fs = null;
+    private IFileSystem<Object> fs = null;
     private Object cwd = null;
 
     private Object rnFile = null;
@@ -47,11 +47,11 @@ public class FileHandler {
         this.con = connection;
     }
 
-    public IFileSystem getFileSystem() {
+    public IFileSystem<Object> getFileSystem() {
         return fs;
     }
 
-    public void setFileSystem(IFileSystem fs) {
+    public void setFileSystem(IFileSystem<Object> fs) {
         this.fs = fs;
         this.cwd = fs.getRoot();
     }
@@ -235,8 +235,7 @@ public class FileHandler {
 
         Object dir = cwd;
 
-        // "-l" is not present in any specification, but chrome uses it
-        // TODO remove this when the bug gets fixed
+        // "-l" is not present in any specification, but some clients use it
         // https://bugs.chromium.org/p/chromium/issues/detail?id=706905
         for (String arg : args) {
             if (!arg.equals("-l") && !arg.equals("-a")) {
@@ -256,7 +255,7 @@ public class FileHandler {
             data.append(Utils.format(fs, file));
         }
 
-        con.sendData(data.toString().getBytes("UTF-8"));
+        con.sendData(data.toString().getBytes(StandardCharsets.UTF_8));
         con.sendResponse(226, "The list was sent");
     }
 
@@ -265,8 +264,7 @@ public class FileHandler {
 
         Object dir = cwd;
 
-        // "-l" is not present in any specification, but chrome uses it
-        // TODO remove this when the bug gets fixed
+        // "-l" is not present in any specification, but some clients use it
         // https://bugs.chromium.org/p/chromium/issues/detail?id=706905
         for (String arg : args) {
             if (!arg.equals("-l") && !arg.equals("-a")) {
@@ -286,7 +284,7 @@ public class FileHandler {
             data.append(fs.getName(file)).append("\r\n");
         }
 
-        con.sendData(data.toString().getBytes("UTF-8"));
+        con.sendData(data.toString().getBytes(StandardCharsets.UTF_8));
         con.sendResponse(226, "The list was sent");
     }
 
@@ -380,7 +378,7 @@ public class FileHandler {
             data.append(Utils.getFacts(fs, f, options));
         }
 
-        con.sendData(data.toString().getBytes("UTF-8"));
+        con.sendData(data.toString().getBytes(StandardCharsets.UTF_8));
         con.sendResponse(226, "The file list was sent!");
     }
 
