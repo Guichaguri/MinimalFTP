@@ -10,3 +10,5 @@ out/
 
 gradle.properties
 secring.gpg
+public.key
+private.key

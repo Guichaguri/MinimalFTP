@@ -92,6 +92,7 @@ jreleaser {
                 sonatype {
                     active = 'ALWAYS'
                     url = 'https://central.sonatype.com/api/v1/publisher'
+                    applyMavenCentralRules = true
                     stagingRepository('build/pre-deploy')
                 }
             }
