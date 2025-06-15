@@ -85,23 +85,8 @@ public class NativeFileSystem implements IFileSystem<File> {
     }
 
     @Override
-    public int getHardLinks(File file) {
-        return file.isDirectory() ? 3 : 1;
-    }
-
-    @Override
     public String getName(File file) {
         return file.getName();
-    }
-
-    @Override
-    public String getOwner(File file) {
-        return "-";
-    }
-
-    @Override
-    public String getGroup(File file) {
-        return "-";
     }
 
     @Override
@@ -118,17 +103,6 @@ public class NativeFileSystem implements IFileSystem<File> {
         if(!dir.isDirectory()) throw new IOException("Not a directory");
 
         return dir.listFiles();
-    }
-
-    @Override
-    public File findFile(String path) throws IOException {
-        File file = new File(rootDir, path);
-
-        if(!isInside(rootDir, file)) {
-            throw new FileNotFoundException("No permission to access this file");
-        }
-
-        return file;
     }
 
     @Override

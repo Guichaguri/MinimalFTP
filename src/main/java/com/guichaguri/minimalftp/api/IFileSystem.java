@@ -16,6 +16,8 @@
 
 package com.guichaguri.minimalftp.api;
 
+import com.guichaguri.minimalftp.Utils;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -23,44 +25,54 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
- * Represents a File System
+ * Represents a File System.
+ *
+ * For methods that aren't implemented, please throw a {@link UnsupportedOperationException}.
+ * Keep in mind that not implementing a method may break a some commands, which can break some FTP clients.
+ *
  * @author Guilherme Chaguri
  */
 public interface IFileSystem<F extends Object> {
 
     /**
-     * Retrieves the root file object
+     * Retrieves the root file object.
      * @return The file object
      */
     F getRoot();
 
     /**
-     * Gets the relative path of a file from the file system's root
+     * Gets the relative path of a file from the file system's root.
      * @param file The file object
      * @return The relative path
      */
     String getPath(F file);
 
     /**
-     * Gets whether the file exists
+     * Gets whether the file exists.
      * @param file The file object
      * @return {@code true} if the file exists
      */
     boolean exists(F file);
 
     /**
-     * Checks if the file is a directory
+     * Checks if the file is a directory.
      * @param file The file object
      * @return {@code true} if the file is a directory
      */
     boolean isDirectory(F file);
 
     /**
-     * Gets the permission number
+     * Gets the permission number.
      * @param file The file object
-     * @return The octal permission number in decimal
+     * @return The octal permission number
      */
-    int getPermissions(F file);
+    default int getPermissions(F file) {
+        int perms = 0;
+        perms = Utils.setPermission(perms, Utils.CAT_OWNER + Utils.TYPE_READ, true);
+        perms = Utils.setPermission(perms, Utils.CAT_OWNER + Utils.TYPE_WRITE, true);
+        perms = Utils.setPermission(perms, Utils.CAT_OWNER + Utils.TYPE_EXECUTE, false);
+        return perms;
+    }
 
     /**
      * Gets the file size
@@ -72,7 +84,7 @@ public interface IFileSystem<F extends Object> {
     /**
      * Gets the modified time.
      * @param file The file object
-     * @return The modified time in millis
+     * @return The modified time in millis since the epoch
      */
     long getLastModified(F file);
 
@@ -81,7 +93,9 @@ public interface IFileSystem<F extends Object> {
      * @param file The file object
      * @return The number of hard links
      */
-    int getHardLinks(F file);
+    default int getHardLinks(F file) {
+        return isDirectory(file) ? 3 : 1;
+    }
 
     /**
      * Gets the file name
@@ -95,14 +109,18 @@ public interface IFileSystem<F extends Object> {
      * @param file The file object
      * @return The owner name
      */
-    String getOwner(F file);
+    default String getOwner(F file) {
+        return "-";
+    }
 
     /**
      * Gets the file group
      * @param file The file object
      * @return The group name
      */
-    String getGroup(F file);
+    default String getGroup(F file) {
+        return "-";
+    }
 
     /**
      * Gets (or calculates) the hash digest of a file.
@@ -163,7 +181,9 @@ public interface IFileSystem<F extends Object> {
      * @throws java.io.FileNotFoundException When there's no permission to access the file or the file doesn't exist
      * @throws IOException When an error occurs
      */
-    F findFile(String path) throws IOException;
+    default F findFile(String path) throws IOException {
+        return findFile(getRoot(), path);
+    }
 
     /**
      * Finds a file based on the path.
@@ -232,7 +252,7 @@ public interface IFileSystem<F extends Object> {
     /**
      * Updates the modified time of a file
      * @param file The file object
-     * @param time The new time in milliseconds
+     * @param time The new time in milliseconds since the epoch
      * @throws IOException When an error occurs
      */
     void touch(F file, long time) throws IOException;
