@@ -40,7 +40,7 @@ The required minimum implementation is already done, however, there are still co
 # Usage
 
 ### Dependency
-MinimalFTP is published on JCenter and Maven Central
+MinimalFTP is published on [Maven Central](https://central.sonatype.com/artifact/com.guichaguri/minimalftp).
 
 #### Maven
 ```xml
@@ -48,20 +48,12 @@ MinimalFTP is published on JCenter and Maven Central
   <groupId>com.guichaguri</groupId>
   <artifactId>minimalftp</artifactId>
   <version>1.0.7</version>
-  <type>pom</type>
 </dependency>
 ```
 
 #### Gradle
 ```groovy
-compile 'com.guichaguri:minimalftp:1.0.7'
-```
-
-#### Ivy
-```xml
-<dependency org='com.guichaguri' name='minimalftp' rev='1.0.7'>
-  <artifact name='minimalftp' ext='pom' />
-</dependency>
+implementation 'com.guichaguri:minimalftp:1.0.7'
 ```
 
 ### API
@@ -83,3 +75,30 @@ FTPServer server = new FTPServer(auth);
 // Start listening synchronously
 server.listenSync(21);
 ```
+
+### Firewall
+
+The FTP protocol has two concepts of TCP connections:
+
+#### Control Connection
+
+This is the main FTP server, the one that usually listens on port 21.
+
+The control connection is the one that receives commands for authentication and file manipulation. It also negotiates the data connection for file listing and transfer.
+
+#### Data Connection
+
+This is a secondary connection that is used for file list and transfer (both downloading and uploading).
+
+The FTP protocol supports two modes:
+- The active mode, in which the client creates a TCP server for the FTP server to connect into
+- The passive mode, in which the server creates another TCP server for the client to connect into
+
+Those passive mode servers that MinimalFTP creates each have a random port in the [ephemeral range](https://en.wikipedia.org/wiki/Ephemeral_port).
+You should either configure your firewall to allow incoming TCP connections to the ephemeral port range, or disable passive mode:
+```java
+// Keeps only the Active Mode enabled (not recommended)
+server.setPassiveModeEnabled(false);
+```
+
+Keeping only the active mode enabled is not recommended, as it can cause connectivity problems due to the user having firewall issues.
