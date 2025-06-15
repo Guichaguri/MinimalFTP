@@ -566,6 +566,8 @@ public class FTPConnection implements Closeable {
             sendResponse(550, ex.getMessage());
         } catch(IOException ex) {
             sendResponse(450, ex.getMessage());
+        } catch(UnsupportedOperationException ex) {
+            sendResponse(504, ex.getMessage());
         } catch(Exception ex) {
             sendResponse(451, ex.getMessage());
             ex.printStackTrace();
